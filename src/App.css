@@ -247,20 +247,42 @@
   color: rgba(100, 116, 139, 0.7);
 }
 
-.loaded-message {
+.loaded-state {
+  position: relative;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 2rem;
+  overflow: hidden;
   background:
     radial-gradient(circle at 20% 20%, rgba(255, 237, 213, 0.65), transparent 72%),
     radial-gradient(circle at 78% 78%, rgba(224, 242, 254, 0.6), transparent 70%),
     #f8fafc;
-  color: #1f2937;
+}
+
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.loaded-message {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  color: #1f2937;
   padding: 2rem;
   gap: 1rem;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 32px;
+  box-shadow: 0 30px 110px rgba(148, 163, 184, 0.35);
+  backdrop-filter: blur(14px) saturate(140%);
   animation: softFade 900ms ease both;
 }
 

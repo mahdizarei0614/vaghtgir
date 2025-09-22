@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import Confetti from 'react-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
 
@@ -32,12 +33,18 @@ const formatDuration = (milliseconds: number) => {
   return minuteText ? `${minuteText} و ${secondText}` : secondText;
 };
 
+const getWindowSize = () => ({
+  width: typeof window !== 'undefined' ? window.innerWidth : 0,
+  height: typeof window !== 'undefined' ? window.innerHeight : 0,
+});
+
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [isQuoteVisible, setIsQuoteVisible] = useState(false);
+  const [windowSize, setWindowSize] = useState(getWindowSize);
   const progressRef = useRef(0);
   const isCompleteRef = useRef(false);
   const quoteOrderRef = useRef<number[]>([]);
@@ -162,7 +169,15 @@ function App() {
   }, [isLoading]);
 
   useEffect(() => {
-    if (!TIME_QUOTES.length) {
+    const handleResize = () => setWindowSize(getWindowSize());
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading || !TIME_QUOTES.length) {
+      setIsQuoteVisible(false);
       return undefined;
     }
 
@@ -202,13 +217,13 @@ function App() {
         window.clearTimeout(quoteFadeTimeoutRef.current);
       }
     };
-  }, []);
+  }, [isLoading]);
 
   const progressValue = Math.min(100, Math.round(progress));
   const progressIndicatorStyle = {
     '--progress': progress.toFixed(2),
   } as React.CSSProperties;
-  const activeQuote = TIME_QUOTES[currentQuoteIndex];
+  const activeQuote = isLoading ? TIME_QUOTES[currentQuoteIndex] : undefined;
 
   return (
     <div className="App">
@@ -230,7 +245,7 @@ function App() {
               </div>
             </div>
             <p className="loading-text">نفستو نگه دار؛ رمز به زودی لو می‌ره...</p>
-            {/*<p className="loading-subtext">سامانه در سکوت می‌تازد؛ تو فقط مراقب باش.</p>*/}
+            <p className="loading-subtext">لطفاً آرام بمانید و چشم از صفحه برندارید.</p>
             <div className="progress-track" aria-hidden="true">
               <div className="progress-bar" style={{ width: `${progress}%` }} />
             </div>
@@ -239,16 +254,26 @@ function App() {
           </div>
         </div>
       ) : (
-        <div className="loaded-message">
-          <bdi>
-            همین حالا{' '}
-            <bdi className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</bdi>{' '}
-            از عمرت دود شد.
-          </bdi>
-          <bdi>حالا رفرش کن :)</bdi>
+        <div className="loaded-state">
+          <div className="confetti-layer" aria-hidden="true">
+            <Confetti
+              width={windowSize.width}
+              height={windowSize.height}
+              numberOfPieces={260}
+              recycle
+            />
+          </div>
+          <div className="loaded-message">
+            <bdi>
+              همین حالا{' '}
+              <bdi className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</bdi>{' '}
+              از عمرت دود شد.
+            </bdi>
+            <bdi>حالا رفرش کن :)</bdi>
+          </div>
         </div>
       )}
-      {activeQuote ? (
+      {isLoading && activeQuote ? (
         <div
           className={`quote-banner${isQuoteVisible ? ' quote-banner--visible' : ''}`}
           aria-live="polite"
