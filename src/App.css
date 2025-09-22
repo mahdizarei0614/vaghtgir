@@ -97,10 +97,13 @@
 }
 
 .App {
+  position: relative;
   min-height: 100vh;
   font-family: 'Rubik', 'Vazirmatn', 'IRANSans', 'Tahoma', sans-serif;
   color: #1f2937;
   background-color: #f8fafc;
+  overflow: hidden;
+  transition: background-color 600ms ease, color 600ms ease;
 }
 
 .loading-container {
@@ -120,7 +123,9 @@
     radial-gradient(40% 40% at var(--g7x) var(--g7y), rgba(222, 241, 255, 0.9), transparent 72%),
     radial-gradient(34% 34% at var(--g8x) var(--g8y), rgba(255, 248, 224, 0.92), transparent 72%),
     radial-gradient(60% 60% at 50% 50%, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.95));
-  animation: gradientFlow 22s ease-in-out infinite alternate;
+  animation:
+    gradientFlow 22s ease-in-out infinite alternate,
+    loaderReveal 900ms ease forwards;
 }
 
 .loading-container::before {
@@ -134,7 +139,9 @@
     radial-gradient(560px circle at 30% 80%, rgba(213, 255, 235, 0.8), transparent 77%);
   filter: blur(48px);
   opacity: 0.98;
-  animation: auroraDrift 26s ease-in-out infinite alternate;
+  animation:
+    auroraDrift 26s ease-in-out infinite alternate,
+    loaderGlow 1.2s ease forwards;
   z-index: 0;
 }
 
@@ -149,6 +156,9 @@
   box-shadow: 0 30px 110px rgba(148, 163, 184, 0.35);
   border: 1px solid rgba(226, 232, 240, 0.6);
   direction: rtl;
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  animation: cardRise 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .progress-indicator {
@@ -236,12 +246,14 @@
   margin: 0 0 0.5rem;
   font-size: clamp(0.98rem, 2.1vw, 1.24rem);
   color: rgba(71, 85, 105, 0.75);
+  transition: color 320ms ease;
 }
 
 .progress-footnote {
   margin: 0;
   font-size: clamp(0.85rem, 1.8vw, 1.08rem);
   color: rgba(100, 116, 139, 0.7);
+  transition: color 320ms ease;
 }
 
 .loaded-message {
@@ -258,6 +270,9 @@
   text-align: center;
   padding: 2rem;
   gap: 1rem;
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  animation: fadeInUp 880ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .loaded-message h1 {
@@ -281,6 +296,47 @@
   background: rgba(255, 105, 180, 0.12);
   color: #be123c;
   font-weight: 600;
+  transition: background-color 320ms ease, color 320ms ease;
+}
+
+.quote-banner {
+  position: absolute;
+  bottom: clamp(1.5rem, 4vw, 3.5rem);
+  left: 50%;
+  transform: translate3d(-50%, 40px, 0);
+  max-width: min(90vw, 720px);
+  padding: clamp(0.9rem, 2.6vw, 1.4rem) clamp(1.2rem, 3vw, 2.2rem);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #f8fafc;
+  backdrop-filter: blur(18px);
+  text-align: center;
+  direction: rtl;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 800ms ease, transform 800ms ease;
+}
+
+.quote-banner p {
+  margin: 0;
+  font-size: clamp(0.98rem, 2.2vw, 1.3rem);
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.quote-banner--visible {
+  opacity: 1;
+  transform: translate3d(-50%, 0, 0);
+}
+
+.quote-text {
+  font-weight: 500;
+}
+
+.quote-author {
+  font-size: 0.95em;
+  color: rgba(248, 250, 252, 0.8);
 }
 
 @keyframes gradientFlow {
@@ -349,5 +405,45 @@
   }
   100% {
     transform: translate3d(-4%, 3%, 0) scale(1.08);
+  }
+}
+
+@keyframes loaderReveal {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes loaderGlow {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.98;
+  }
+}
+
+@keyframes cardRise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
 }

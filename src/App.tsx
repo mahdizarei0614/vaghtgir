@@ -4,6 +4,117 @@ import './App.css';
 const LOADING_DURATION_MS = 180_000;
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 
+const QUOTES: { text: string; author: string }[] = [
+  { text: 'زمان بی‌رحم‌ترین داور است.', author: 'سوفوکل' },
+  { text: 'زمان همان سرمایه پنهان زندگی است.', author: 'بنجامین فرانکلین' },
+  { text: 'زمان همه نقاب‌ها را کنار می‌زند.', author: 'ویلیام شکسپیر' },
+  { text: 'زمان عادلانه‌ترین قاضی جهان است.', author: 'ژان دو لافونتن' },
+  { text: 'زمان شاگرد فرزانه حقیقت است.', author: 'افلاطون' },
+  { text: 'زمان دروغ را خسته می‌کند.', author: 'آیسخلوس' },
+  { text: 'زمان معمار تغییر است.', author: 'نلسون ماندلا' },
+  { text: 'زمان موجی است که جرئت می‌خواهد.', author: 'ناپلئون بناپارت' },
+  { text: 'زمان دشمن تنبلی است.', author: 'توماس جفرسون' },
+  { text: 'زمان میدان آزمون اراده است.', author: 'مهاتما گاندی' },
+  { text: 'زمان تیزتر از شمشیر است.', author: 'جلال‌الدین محمد بلخی' },
+  { text: 'زمان بعد چهارم اندیشه است.', author: 'آلبرت اینشتین' },
+  { text: 'زمان کارگاه آرام نبوغ است.', author: 'لئوناردو داوینچی' },
+  { text: 'زمان شعر خاموش زندگی است.', author: 'ویکتور هوگو' },
+  { text: 'زمان موتور انقلاب‌هاست.', author: 'ولادیمیر لنین' },
+  { text: 'زمان غربالگر روح است.', author: 'سعدی شیرازی' },
+  { text: 'زمان گوهر بردباران است.', author: 'امام علی (ع)' },
+  { text: 'زمان متحد قهرمانان است.', author: 'وینستون چرچیل' },
+  { text: 'زمان شعر طبیعت است.', author: 'هنری دیوید ثورو' },
+  { text: 'زمان صدای عدالت است.', author: 'مارتین لوتر کینگ جونیور' },
+  { text: 'زمان شاعر خاطره‌هاست.', author: 'خلیل جبران' },
+  { text: 'زمان نفس خرد است.', author: 'رنه دکارت' },
+  { text: 'زمان رنگ هنر را می‌سازد.', author: 'پابلو پیکاسو' },
+  { text: 'زمان سپر حقیقت است.', author: 'ژرژ برنارد شاو' },
+  { text: 'زمان افق علم را می‌گشاید.', author: 'استیون هاوکینگ' },
+  { text: 'زمان زر ناب زندگی است.', author: 'یوهان ولفگانگ گوته' },
+  { text: 'زمان قلم تاریخ است.', author: 'هرودوت' },
+  { text: 'زمان چراغ راه سیاست است.', author: 'بنجامین دیزرائیلی' },
+  { text: 'زمان طب روح انسان است.', author: 'الکساندر پوشکین' },
+  { text: 'زمان سلطان بی‌تاج طبیعت است.', author: 'ویلیام وردزورث' },
+  { text: 'زمان قلب ریاضیات است.', author: 'کارل فریدریش گاوس' },
+  { text: 'زمان داور نهایی تاریخ است.', author: 'جان اف کندی' },
+  { text: 'زمان یار پنهان امید است.', author: 'آنه فرانک' },
+  { text: 'زمان ضربان شعر است.', author: 'امیلی دیکنسون' },
+  { text: 'زمان میدان رقص قدرت است.', author: 'فریدریش نیچه' },
+  { text: 'زمان شکل‌ دهنده اندیشه است.', author: 'ارسطو' },
+  { text: 'زمان مادر فضیلت‌هاست.', author: 'کنفوسیوس' },
+  { text: 'زمان رود آرام رؤیاهاست.', author: 'سهراب سپهری' },
+  { text: 'زمان ساقی رازهای عشق است.', author: 'حافظ' },
+  { text: 'زمان آینه اندازه‌گیری است.', author: 'عمر خیام' },
+  { text: 'زمان ستون مسیرهای یخ‌زده است.', author: 'رابرت فراست' },
+  { text: 'زمان آزمایشگاه کشف است.', author: 'ماری کوری' },
+  { text: 'زمان ویراستار روح است.', author: 'جین آستن' },
+  { text: 'زمان نفس آرام تائو است.', author: 'لائوتسه' },
+  { text: 'زمان فرمانده نهایی میدان است.', author: 'سان تزو' },
+  { text: 'زمان شاخص تکامل است.', author: 'چارلز داروین' },
+  { text: 'زمان سیم نازک الهام است.', author: 'نیکولا تسلا' },
+  { text: 'زمان قانون بزرگ طبیعت است.', author: 'آیزاک نیوتن' },
+  { text: 'زمان سایه بلند خاطره است.', author: 'ادگار آلن پو' },
+  { text: 'زمان تپش آرام روح است.', author: 'هرمان هسه' },
+  { text: 'زمان عطر ماندگار شعر است.', author: 'رابیندرانات تاگور' },
+  { text: 'زمان به هر داستان جان می‌دهد.', author: 'گابریل گارسیا مارکز' },
+  { text: 'زمان استاد تلخ آگاهی است.', author: 'آرتور شوپنهاور' },
+  { text: 'زمان بذر پرواز خیال است.', author: 'آنتوان دو سنت‌اگزوپری' },
+  { text: 'زمان قاضی بی‌چهره ماست.', author: 'ژان پل سارتر' },
+  { text: 'زمان فریاد رهایی است.', author: 'فریدریش شیلر' },
+  { text: 'زمان ستون جمهوریت است.', author: 'جرج واشینگتن' },
+  { text: 'زمان هنرمند قدرت است.', author: 'نیکولو ماکیاولی' },
+  { text: 'زمان میدان نبرد برابری است.', author: 'سیمون دوبووار' },
+  { text: 'زمان رود خاموش شعر است.', author: 'تی. اس. الیوت' },
+  { text: 'زمان همسایه وجدان است.', author: 'لئو تولستوی' },
+  { text: 'زمان بازیگر سکوت است.', author: 'اوژن یونسکو' },
+  { text: 'زمان افق دل هواپیماست.', author: 'آملیا ارهارت' },
+  { text: 'زمان کلید تجربه است.', author: 'فرانسیس بیکن' },
+  { text: 'زمان روح سنگ را نرم می‌کند.', author: 'میکل‌آنژ' },
+  { text: 'زمان هندسه اخلاق است.', author: 'باروخ اسپینوزا' },
+  { text: 'زمان ناخدای قصه‌هاست.', author: 'ژوزف کنراد' },
+  { text: 'زمان قطب‌نمای ماجراجو است.', author: 'ارنست همینگوی' },
+  { text: 'زمان شمشیر هنرهای رزمی است.', author: 'بروس لی' },
+  { text: 'زمان ابزار دقیق خلاقیت است.', author: 'استیو جابز' },
+  { text: 'زمان وزنه سنجش تمرکز است.', author: 'بیل گیتس' },
+  { text: 'زمان شعر علم کیهان است.', author: 'کارل ساگان' },
+  { text: 'زمان آینه ناخودآگاه است.', author: 'کارل گوستاو یونگ' },
+  { text: 'زمان معمار استدلال است.', author: 'برتراند راسل' },
+  { text: 'زمان اندازه شور زیستن است.', author: 'آلبر کامو' },
+  { text: 'زمان تیغ نقد اجتماع است.', author: 'جلال آل احمد' },
+  { text: 'زمان سیم طلایی شعر است.', author: 'پروین اعتصامی' },
+  { text: 'زمان نبض جسارت شعر است.', author: 'فروغ فرخزاد' },
+  { text: 'زمان سفرنامه حقیقت است.', author: 'ناصرخسرو' },
+  { text: 'زمان چراغ پژوهش است.', author: 'ابوریحان بیرونی' },
+  { text: 'زمان ضربه‌گیر نبوغ است.', author: 'لودویگ فان بتهوون' },
+  { text: 'زمان مترونوم الهام است.', author: 'ولفگانگ آمادئوس موتسارت' },
+  { text: 'زمان زبان منطق است.', author: 'لودویگ ویتگنشتاین' },
+  { text: 'زمان تپش فلسفه است.', author: 'آلن واتس' },
+  { text: 'زمان استاد طنز جهان است.', author: 'مارک تواین' },
+  { text: 'زمان ملوان دریای خیال است.', author: 'هرمان ملویل' },
+  { text: 'زمان نامه‌رسان حیرت است.', author: 'فرانتس کافکا' },
+  { text: 'زمان نسیم شعله‌ور شعر است.', author: 'سیلویا پلات' },
+  { text: 'زمان چراغ نقد قدرت است.', author: 'جورج اورول' },
+  { text: 'زمان آهنگ جان انسان است.', author: 'فیودور داستایفسکی' },
+  { text: 'زمان آیینه حماسه است.', author: 'ابوالقاسم فردوسی' },
+  { text: 'زمان معیار آزادی است.', author: 'جان استوارت میل' },
+  { text: 'زمان زیست‌شناسی جامعه است.', author: 'اگوست کنت' },
+  { text: 'زمان رمز ذهن ماشینی است.', author: 'آلن تورینگ' },
+  { text: 'زمان سبک بیان را می‌سازد.', author: 'کوکو شانل' },
+  { text: 'زمان آیینه خنده ماست.', author: 'رابین ویلیامز' },
+  { text: 'زمان فرصت جسارت است.', author: 'اپرا وینفری' },
+  { text: 'زمان ساز امید نسل‌هاست.', author: 'مالالا یوسفزی' },
+  { text: 'زمان چرخه شجاعت است.', author: 'رزا پارکس' }
+];
+
+const createRandomOrder = () => {
+  const indices = Array.from({ length: QUOTES.length }, (_, index) => index);
+  for (let i = indices.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  return indices;
+};
+
 const toPersianDigits = (value: number) =>
   value
     .toString()
@@ -24,6 +135,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
+  const [quoteOrder, setQuoteOrder] = useState<number[]>(() => createRandomOrder());
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [isQuoteVisible, setIsQuoteVisible] = useState(true);
   const progressRef = useRef(0);
   const isCompleteRef = useRef(false);
 
@@ -143,10 +257,45 @@ function App() {
     }
   }, [isLoading]);
 
+  useEffect(() => {
+    if (!quoteOrder.length) {
+      return undefined;
+    }
+
+    setIsQuoteVisible(true);
+
+    const displayDuration = 10_000;
+    const fadeDuration = 800;
+    let fadeTimeout: number | undefined;
+
+    const intervalId = window.setInterval(() => {
+      setIsQuoteVisible(false);
+      fadeTimeout = window.setTimeout(() => {
+        setCurrentQuoteIndex((previous) => {
+          const nextIndex = previous + 1;
+          if (nextIndex >= quoteOrder.length) {
+            setQuoteOrder(createRandomOrder());
+            return 0;
+          }
+          return nextIndex;
+        });
+        setIsQuoteVisible(true);
+      }, fadeDuration);
+    }, displayDuration);
+
+    return () => {
+      window.clearInterval(intervalId);
+      if (fadeTimeout !== undefined) {
+        window.clearTimeout(fadeTimeout);
+      }
+    };
+  }, [quoteOrder]);
+
   const progressValue = Math.min(100, Math.round(progress));
   const progressIndicatorStyle = {
     '--progress': progress.toFixed(2),
   } as React.CSSProperties;
+  const activeQuote = quoteOrder.length ? QUOTES[quoteOrder[currentQuoteIndex]] : undefined;
 
   return (
     <div className="App">
@@ -167,26 +316,34 @@ function App() {
                 <span className="progress-indicator__suffix">%</span>
               </div>
             </div>
-            <p className="loading-text">لطفاً آرام بمانید و چشم از صفحه برندارید.</p>
-            <p className="loading-subtext">یک فرآیند محرمانه و شگفت‌انگیز همین حالا در پس‌زمینه آغاز شده است.</p>
+            <p className="loading-text">آرام بمان. مأموریت سرد و جدی است.</p>
+            <p className="loading-subtext">چشم از زمان برندار. ثانیه‌ها حساب می‌شوند.</p>
             <div className="progress-track" aria-hidden="true">
               <div className="progress-bar" style={{ width: `${progress}%` }} />
             </div>
-            <p className="progress-note">داده‌ها در حال هم‌ترازی‌اند؛ هر لحظه ممکن است اتفاق خارق‌العاده رخ دهد.</p>
-            <p className="progress-footnote">تا پایان عملیات فقط صبر کنید و اجازه دهید جادو کار خودش را بکند.</p>
+            <p className="progress-note">در مسیر بمان. زمان حریف ندارد.</p>
+            <p className="progress-footnote">نفس عمیق. عملیات خودش تو را نگه می‌دارد.</p>
           </div>
         </div>
       ) : (
         <div className="loaded-message">
-          <h1>عملیات تکمیل شد.</h1>
+          <h1>مأموریت تموم شد، یا شاید نه.</h1>
           <p>
-            شما با موفقیت دقیقاً{' '}
+            تو همین حالا{' '}
             <span className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</span>{' '}
-            از زمان خود را در این صفحه تلف کردید.
+            را دود کردی.
           </p>
-          <p>می‌توانید صفحه را تازه‌سازی کنید تا دوباره همین مقدار زمان را قربانی ماجرا کنید.</p>
+          <p>ریفرش کن تا دوباره زمان را قربانی افسانه کنیم.</p>
         </div>
       )}
+      {activeQuote ? (
+        <div className={`quote-banner ${isQuoteVisible ? 'quote-banner--visible' : ''}`} aria-live="polite">
+          <p>
+            <span className="quote-text">«{activeQuote.text}»</span>
+            <span className="quote-author">— {activeQuote.author}</span>
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
