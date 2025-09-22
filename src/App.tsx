@@ -1,8 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
+import { TIME_QUOTES } from './timeQuotes';
 
 const LOADING_DURATION_MS = 180_000;
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+const QUOTE_DISPLAY_DURATION_MS = 10_000;
+const QUOTE_FADE_DURATION_MS = 1_000;
+
+const shuffleArray = <T,>(items: readonly T[]) => {
+  const cloned = [...items];
+  for (let i = cloned.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
+  }
+  return cloned;
+};
 
 const toPersianDigits = (value: number) =>
   value
@@ -24,8 +36,14 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [isQuoteVisible, setIsQuoteVisible] = useState(false);
   const progressRef = useRef(0);
   const isCompleteRef = useRef(false);
+  const quoteOrderRef = useRef<number[]>([]);
+  const quotePointerRef = useRef(0);
+  const quoteIntervalRef = useRef<number | null>(null);
+  const quoteFadeTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIsLoading(false), LOADING_DURATION_MS);
@@ -143,10 +161,54 @@ function App() {
     }
   }, [isLoading]);
 
+  useEffect(() => {
+    if (!TIME_QUOTES.length) {
+      return undefined;
+    }
+
+    const indexes = TIME_QUOTES.map((_, index) => index);
+    quoteOrderRef.current = shuffleArray(indexes);
+    quotePointerRef.current = 0;
+    setCurrentQuoteIndex(quoteOrderRef.current[0] ?? 0);
+
+    const fadeInTimer = window.setTimeout(() => setIsQuoteVisible(true), 80);
+
+    const cycleQuotes = () => {
+      setIsQuoteVisible(false);
+
+      if (quoteFadeTimeoutRef.current !== null) {
+        window.clearTimeout(quoteFadeTimeoutRef.current);
+      }
+
+      quoteFadeTimeoutRef.current = window.setTimeout(() => {
+        const order = quoteOrderRef.current;
+        if (!order.length) {
+          return;
+        }
+        quotePointerRef.current = (quotePointerRef.current + 1) % order.length;
+        setCurrentQuoteIndex(order[quotePointerRef.current]);
+        setIsQuoteVisible(true);
+      }, QUOTE_FADE_DURATION_MS);
+    };
+
+    quoteIntervalRef.current = window.setInterval(cycleQuotes, QUOTE_DISPLAY_DURATION_MS);
+
+    return () => {
+      window.clearTimeout(fadeInTimer);
+      if (quoteIntervalRef.current !== null) {
+        window.clearInterval(quoteIntervalRef.current);
+      }
+      if (quoteFadeTimeoutRef.current !== null) {
+        window.clearTimeout(quoteFadeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const progressValue = Math.min(100, Math.round(progress));
   const progressIndicatorStyle = {
     '--progress': progress.toFixed(2),
   } as React.CSSProperties;
+  const activeQuote = TIME_QUOTES[currentQuoteIndex];
 
   return (
     <div className="App">
@@ -167,26 +229,37 @@ function App() {
                 <span className="progress-indicator__suffix">%</span>
               </div>
             </div>
-            <p className="loading-text">لطفاً آرام بمانید و چشم از صفحه برندارید.</p>
-            <p className="loading-subtext">یک فرآیند محرمانه و شگفت‌انگیز همین حالا در پس‌زمینه آغاز شده است.</p>
+            <p className="loading-text">نفستو نگه دار؛ رمز به زودی لو می‌ره...</p>
+            {/*<p className="loading-subtext">سامانه در سکوت می‌تازد؛ تو فقط مراقب باش.</p>*/}
             <div className="progress-track" aria-hidden="true">
               <div className="progress-bar" style={{ width: `${progress}%` }} />
             </div>
-            <p className="progress-note">داده‌ها در حال هم‌ترازی‌اند؛ هر لحظه ممکن است اتفاق خارق‌العاده رخ دهد.</p>
-            <p className="progress-footnote">تا پایان عملیات فقط صبر کنید و اجازه دهید جادو کار خودش را بکند.</p>
+            <p className="progress-note">میتونی تو این مدت به یه دوچرخه یا یه نون سنگک فکر کنی.</p>
+            {/*<p className="progress-footnote">نفس را نگه دار؛ رمز به زودی لو می‌رود.</p>*/}
           </div>
         </div>
       ) : (
         <div className="loaded-message">
-          <h1>عملیات تکمیل شد.</h1>
-          <p>
-            شما با موفقیت دقیقاً{' '}
-            <span className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</span>{' '}
-            از زمان خود را در این صفحه تلف کردید.
-          </p>
-          <p>می‌توانید صفحه را تازه‌سازی کنید تا دوباره همین مقدار زمان را قربانی ماجرا کنید.</p>
+          <bdi>
+            همین حالا{' '}
+            <bdi className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</bdi>{' '}
+            از عمرت دود شد.
+          </bdi>
+          <bdi>حالا رفرش کن :)</bdi>
         </div>
       )}
+      {activeQuote ? (
+        <div
+          className={`quote-banner${isQuoteVisible ? ' quote-banner--visible' : ''}`}
+          aria-live="polite"
+        >
+          <div className="quote-banner__content">
+            <span className="quote-banner__text">{activeQuote.text}</span>
+            <span className="quote-banner__separator">—</span>
+            <span className="quote-banner__author">{activeQuote.author}</span>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
