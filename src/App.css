@@ -105,6 +105,13 @@
   overflow: hidden;
 }
 
+.confetti-canvas {
+  position: fixed !important;
+  inset: 0 !important;
+  pointer-events: none;
+  z-index: 0 !important;
+}
+
 .loading-container {
   position: relative;
   display: flex;
@@ -248,6 +255,8 @@
 }
 
 .loaded-message {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;

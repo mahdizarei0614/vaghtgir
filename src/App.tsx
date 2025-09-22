@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import Confetti from 'react-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
 
@@ -15,6 +16,11 @@ const shuffleArray = <T,>(items: readonly T[]) => {
   }
   return cloned;
 };
+
+const getWindowSize = () =>
+  typeof window === 'undefined'
+    ? { width: 0, height: 0 }
+    : { width: window.innerWidth, height: window.innerHeight };
 
 const toPersianDigits = (value: number) =>
   value
@@ -44,6 +50,7 @@ function App() {
   const quotePointerRef = useRef(0);
   const quoteIntervalRef = useRef<number | null>(null);
   const quoteFadeTimeoutRef = useRef<number | null>(null);
+  const [windowSize, setWindowSize] = useState(getWindowSize);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIsLoading(false), LOADING_DURATION_MS);
@@ -166,6 +173,11 @@ function App() {
       return undefined;
     }
 
+    if (!isLoading) {
+      setIsQuoteVisible(false);
+      return undefined;
+    }
+
     const indexes = TIME_QUOTES.map((_, index) => index);
     quoteOrderRef.current = shuffleArray(indexes);
     quotePointerRef.current = 0;
@@ -202,16 +214,38 @@ function App() {
         window.clearTimeout(quoteFadeTimeoutRef.current);
       }
     };
+  }, [isLoading]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize(getWindowSize());
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const progressValue = Math.min(100, Math.round(progress));
   const progressIndicatorStyle = {
     '--progress': progress.toFixed(2),
   } as React.CSSProperties;
-  const activeQuote = TIME_QUOTES[currentQuoteIndex];
+  const activeQuote = isLoading ? TIME_QUOTES[currentQuoteIndex] : undefined;
+  const showConfetti = !isLoading;
 
   return (
     <div className="App">
+      {showConfetti ? (
+        <Confetti
+          className="confetti-canvas"
+          width={windowSize.width}
+          height={windowSize.height}
+          numberOfPieces={280}
+          recycle
+          run
+        />
+      ) : null}
       {isLoading ? (
         <div className="loading-container" role="status" aria-live="polite">
           <div className="loading-content">
