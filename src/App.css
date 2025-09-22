@@ -97,10 +97,17 @@
 }
 
 .App {
+  position: relative;
   min-height: 100vh;
   font-family: 'Rubik', 'Vazirmatn', 'IRANSans', 'Tahoma', sans-serif;
   color: #1f2937;
   background-color: #f8fafc;
+  overflow-x: hidden;
+  transition: background-color 600ms ease, color 600ms ease;
+}
+
+.App.is-loaded {
+  background-color: #f1f5f9;
 }
 
 .loading-container {
@@ -120,7 +127,7 @@
     radial-gradient(40% 40% at var(--g7x) var(--g7y), rgba(222, 241, 255, 0.9), transparent 72%),
     radial-gradient(34% 34% at var(--g8x) var(--g8y), rgba(255, 248, 224, 0.92), transparent 72%),
     radial-gradient(60% 60% at 50% 50%, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.95));
-  animation: gradientFlow 22s ease-in-out infinite alternate;
+  animation: gradientFlow 22s ease-in-out infinite alternate, fadeInFrame 900ms ease forwards;
 }
 
 .loading-container::before {
@@ -149,6 +156,8 @@
   box-shadow: 0 30px 110px rgba(148, 163, 184, 0.35);
   border: 1px solid rgba(226, 232, 240, 0.6);
   direction: rtl;
+  animation: fadeRise 820ms ease forwards;
+  transition: transform 600ms ease, box-shadow 600ms ease;
 }
 
 .progress-indicator {
@@ -258,6 +267,7 @@
   text-align: center;
   padding: 2rem;
   gap: 1rem;
+  animation: fadeRise 820ms ease 80ms forwards;
 }
 
 .loaded-message h1 {
@@ -281,6 +291,46 @@
   background: rgba(255, 105, 180, 0.12);
   color: #be123c;
   font-weight: 600;
+}
+
+.quote-banner {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(1.6rem, 6vh, 3.2rem);
+  transform: translate(-50%, 24px);
+  padding: clamp(0.8rem, 2vw, 1rem) clamp(1.2rem, 3vw, 1.8rem);
+  background: rgba(15, 23, 42, 0.78);
+  color: #f8fafc;
+  border-radius: 999px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+  max-width: min(90vw, 680px);
+  text-align: center;
+  box-shadow: 0 18px 46px rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(16px) saturate(160%);
+  direction: rtl;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 800ms ease, transform 800ms ease;
+}
+
+.quote-banner--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.quote-banner__text {
+  margin: 0;
+  font-size: clamp(1rem, 2.4vw, 1.35rem);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.quote-banner__author {
+  font-size: clamp(0.85rem, 2vw, 1.1rem);
+  color: rgba(226, 232, 240, 0.85);
 }
 
 @keyframes gradientFlow {
@@ -349,5 +399,25 @@
   }
   100% {
     transform: translate3d(-4%, 3%, 0) scale(1.08);
+  }
+}
+
+@keyframes fadeRise {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeInFrame {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
   }
 }
