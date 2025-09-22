@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import Confetti from 'react-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
 
@@ -6,6 +7,21 @@ const LOADING_DURATION_MS = 180_000;
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 const QUOTE_DISPLAY_DURATION_MS = 10_000;
 const QUOTE_FADE_DURATION_MS = 1_000;
+
+const CODE_LINES = [
+  'const SECRET_KEY = process.env.SECRET_KEY ?? "***";',
+  'function unlock(code: string) {',
+  '  if (!code) throw new Error("missing code");',
+  '  return fetch(`/api/unlock?code=${code}`);',
+  '}',
+  'const retries = Array.from({ length: 3 });',
+  'for (const attempt of retries) {',
+  '  console.log(`attempt #${attempt}`);',
+  '}',
+  'setTimeout(() => console.log("time is ticking"), 1000);',
+  'await new Promise((resolve) => requestIdleCallback(resolve));',
+  'return "🕒";',
+];
 
 const shuffleArray = <T,>(items: readonly T[]) => {
   const cloned = [...items];
@@ -38,6 +54,10 @@ function App() {
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [isQuoteVisible, setIsQuoteVisible] = useState(false);
+  const [windowSize, setWindowSize] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
   const progressRef = useRef(0);
   const isCompleteRef = useRef(false);
   const quoteOrderRef = useRef<number[]>([]);
@@ -48,6 +68,16 @@ function App() {
   useEffect(() => {
     const timer = window.setTimeout(() => setIsLoading(false), LOADING_DURATION_MS);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const startTimeRef = useRef<number | null>(null);
@@ -209,11 +239,37 @@ function App() {
     '--progress': progress.toFixed(2),
   } as React.CSSProperties;
   const activeQuote = TIME_QUOTES[currentQuoteIndex];
+  const confettiWidth = Math.max(1, Math.floor(windowSize.width));
+  const confettiHeight = Math.max(1, Math.floor(windowSize.height));
 
   return (
     <div className="App">
+      {!isLoading ? (
+        <Confetti
+          width={confettiWidth}
+          height={confettiHeight}
+          numberOfPieces={220}
+          recycle
+          tweenDuration={8_000}
+          gravity={0.2}
+          style={{ pointerEvents: 'none', zIndex: 0 }}
+        />
+      ) : null}
       {isLoading ? (
         <div className="loading-container" role="status" aria-live="polite">
+          <div className="code-background" aria-hidden="true">
+            <div className="code-background__inner">
+              {CODE_LINES.map((line, index) => (
+                <span
+                  key={`${line}-${index}`}
+                  className="code-line"
+                  style={{ animationDelay: `${index * 0.35}s` }}
+                >
+                  {line}
+                </span>
+              ))}
+            </div>
+          </div>
           <div className="loading-content">
             <div
               className="progress-indicator"
