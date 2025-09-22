@@ -167,30 +167,24 @@ function App() {
                 <span className="progress-indicator__suffix">%</span>
               </div>
             </div>
-            <p className="loading-text">در حال اتلاف وقت فوق‌حرفه‌ای...</p>
-            <p className="loading-subtext">
-              سامانه دارد برای سه دقیقه آینده داستانی حماسی دربارهٔ بارگذاری شما می‌نویسد.
-            </p>
+            <p className="loading-text">لطفاً آرام بمانید و چشم از صفحه برندارید.</p>
+            <p className="loading-subtext">یک فرآیند محرمانه و شگفت‌انگیز همین حالا در پس‌زمینه آغاز شده است.</p>
             <div className="progress-track" aria-hidden="true">
               <div className="progress-bar" style={{ width: `${progress}%` }} />
             </div>
-            <p className="progress-note">تا آن موقع به دوچرخه‌ای فکر کنید که سربالایی می‌رود و غر نمی‌زند.</p>
-            <p className="progress-footnote">
-              هر بار که خسته شدید، یک زنگ خیالی بزنید تا بدانیم هنوز اینجایید.
-            </p>
+            <p className="progress-note">داده‌ها در حال هم‌ترازی‌اند؛ هر لحظه ممکن است اتفاق خارق‌العاده رخ دهد.</p>
+            <p className="progress-footnote">تا پایان عملیات فقط صبر کنید و اجازه دهید جادو کار خودش را بکند.</p>
           </div>
         </div>
       ) : (
         <div className="loaded-message">
-          <h1>ماموریت اتلاف وقت با موفقیت انجام شد!</h1>
+          <h1>عملیات تکمیل شد.</h1>
           <p>
-            شما رسماً <span className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</span>{' '}
-            از عمر عزیزتان را به این صفحه تقدیم کردید.
+            شما با موفقیت دقیقاً{' '}
+            <span className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</span>{' '}
+            از زمان خود را در این صفحه تلف کردید.
           </p>
-          <p>
-            اگر هنوز توان حرکت دارید، دوچرخه خیالی‌تان را بردارید و یک دور افتخار بزنید، یا صفحه را تازه‌سازی
-            کنید تا دوباره به اوج بی‌مصرفی بازگردید.
-          </p>
+          <p>می‌توانید صفحه را تازه‌سازی کنید تا دوباره همین مقدار زمان را قربانی ماجرا کنید.</p>
         </div>
       )}
     </div>
