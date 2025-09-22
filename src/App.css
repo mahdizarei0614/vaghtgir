@@ -1,38 +1,178 @@
+@property --g1x {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 20%;
+}
+
+@property --g1y {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 30%;
+}
+
+@property --g2x {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 80%;
+}
+
+@property --g2y {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 75%;
+}
+
+@property --g3x {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+
+@property --g3y {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+
 .App {
+  min-height: 100vh;
+  font-family: 'Vazirmatn', 'IRANSans', 'Tahoma', sans-serif;
+  color: #f8fbff;
+  background-color: #020617;
+}
+
+.loading-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(45% 45% at var(--g1x) var(--g1y), rgba(71, 111, 255, 0.65), transparent 70%),
+    radial-gradient(35% 35% at var(--g2x) var(--g2y), rgba(20, 184, 166, 0.55), transparent 70%),
+    radial-gradient(40% 40% at var(--g3x) var(--g3y), rgba(56, 189, 248, 0.45), transparent 70%),
+    #020617;
+  animation: gradientFlow 36s ease-in-out infinite alternate;
+}
+
+.loading-container::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(800px circle at 20% 20%, rgba(59, 130, 246, 0.35), transparent 70%),
+    radial-gradient(900px circle at 80% 70%, rgba(20, 184, 166, 0.3), transparent 70%),
+    radial-gradient(650px circle at 50% 40%, rgba(14, 165, 233, 0.3), transparent 70%);
+  filter: blur(60px);
+  opacity: 0.9;
+  animation: auroraDrift 48s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+.loading-content {
+  position: relative;
+  z-index: 1;
   text-align: center;
+  padding: 3rem;
+  backdrop-filter: blur(18px) saturate(130%);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(30, 64, 175, 0.35));
+  border-radius: 32px;
+  box-shadow: 0 40px 120px rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  direction: rtl;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.spinner {
+  width: clamp(96px, 12vw, 140px);
+  height: clamp(96px, 12vw, 140px);
+  border-radius: 50%;
+  border: 6px solid rgba(148, 163, 184, 0.3);
+  border-top-color: #38bdf8;
+  border-right-color: rgba(14, 165, 233, 0.6);
+  animation: spin 1.6s linear infinite;
+  margin: 0 auto 2.5rem;
+  box-shadow: 0 0 35px rgba(56, 189, 248, 0.4);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.loading-text {
+  font-size: clamp(2.4rem, 4vw, 4rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 0 0 1rem;
 }
 
-.App-header {
-  background-color: #282c34;
+.loading-subtext {
+  font-size: clamp(1.1rem, 2vw, 1.6rem);
+  margin: 0;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.loaded-message {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  background: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.3), transparent 70%),
+    radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.2), transparent 70%),
+    #020617;
+  color: #f8fafc;
+  text-align: center;
+  padding: 2rem;
+  gap: 1rem;
 }
 
-.App-link {
-  color: #61dafb;
+.loaded-message h1 {
+  font-size: clamp(2.4rem, 5vw, 3.5rem);
+  margin: 0;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
+.loaded-message p {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+  color: rgba(226, 232, 240, 0.8);
+}
+
+@keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes gradientFlow {
+  0% {
+    --g1x: 18%;
+    --g1y: 28%;
+    --g2x: 78%;
+    --g2y: 72%;
+    --g3x: 52%;
+    --g3y: 45%;
+  }
+  50% {
+    --g1x: 30%;
+    --g1y: 40%;
+    --g2x: 70%;
+    --g2y: 60%;
+    --g3x: 60%;
+    --g3y: 55%;
+  }
+  100% {
+    --g1x: 22%;
+    --g1y: 70%;
+    --g2x: 85%;
+    --g2y: 30%;
+    --g3x: 45%;
+    --g3y: 65%;
+  }
+}
+
+@keyframes auroraDrift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(2%, 3%, 0) scale(1.1);
+  }
+  100% {
+    transform: translate3d(-3%, 2%, 0) scale(1.08);
   }
 }
