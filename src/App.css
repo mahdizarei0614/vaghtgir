@@ -270,7 +270,7 @@
   color: #334155;
 }
 
-.loaded-message p {
+.loaded-message bdi {
   margin: 0;
   font-size: clamp(1.1rem, 2.2vw, 1.6rem);
   color: rgba(71, 85, 105, 0.78);
@@ -283,7 +283,7 @@
   margin-inline: 0.15rem;
   border-radius: 999px;
   background: rgba(255, 105, 180, 0.12);
-  color: #be123c;
+  color: #be123c !important;
   font-weight: 600;
 }
 

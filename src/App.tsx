@@ -229,24 +229,23 @@ function App() {
                 <span className="progress-indicator__suffix">%</span>
               </div>
             </div>
-            <p className="loading-text">آرام بمان. مأموریت جدی در جریان است.</p>
-            <p className="loading-subtext">سامانه در سکوت می‌تازد؛ تو فقط مراقب باش.</p>
+            <p className="loading-text">نفستو نگه دار؛ رمز به زودی لو می‌ره...</p>
+            {/*<p className="loading-subtext">سامانه در سکوت می‌تازد؛ تو فقط مراقب باش.</p>*/}
             <div className="progress-track" aria-hidden="true">
               <div className="progress-bar" style={{ width: `${progress}%` }} />
             </div>
-            <p className="progress-note">ثانیه‌ها را رها کن، ما حسابشان را داریم.</p>
-            <p className="progress-footnote">نفس را نگه دار؛ رمز به زودی لو می‌رود.</p>
+            <p className="progress-note">میتونی تو این مدت به یه دوچرخه یا یه نون سنگک فکر کنی.</p>
+            {/*<p className="progress-footnote">نفس را نگه دار؛ رمز به زودی لو می‌رود.</p>*/}
           </div>
         </div>
       ) : (
         <div className="loaded-message">
-          <h1>ماموریت تمام شد.</h1>
-          <p>
+          <bdi>
             همین حالا{' '}
-            <span className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</span>{' '}
+            <bdi className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</bdi>{' '}
             از عمرت دود شد.
-          </p>
-          <p>اگر می‌خواهی دوباره بخندی، صفحه را یک بار دیگر تازه کن.</p>
+          </bdi>
+          <bdi>حالا رفرش کن :)</bdi>
         </div>
       )}
       {activeQuote ? (
