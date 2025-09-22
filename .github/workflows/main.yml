@@ -1,0 +1,29 @@
+on:
+  push:
+    branches: [ master ]
+
+  workflow_dispatch:
+permissions:
+  contents: write
+name: 🚀 Deploy website on push
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19
+      - name: npm install and npm run CI commands
+        run: |
+          npm i -f
+          npm run build:ci
+      - name: 📂 Sync files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: 162.55.4.44
+          username: cicd@vaghtg.ir
+          password: ${{ secrets.PASSWORD }}
+          local-dir: ./build/
