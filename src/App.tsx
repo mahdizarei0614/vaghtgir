@@ -3,7 +3,7 @@ import Confetti from 'react-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
 
-const LOADING_DURATION_MS = 180_000;
+const LOADING_DURATION_MS = 210_000;
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 const QUOTE_DISPLAY_DURATION_MS = 10_000;
 const QUOTE_FADE_DURATION_MS = 1_000;
