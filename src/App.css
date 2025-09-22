@@ -48,9 +48,9 @@
   justify-content: center;
   min-height: 100vh;
   overflow: hidden;
-  background: radial-gradient(45% 45% at var(--g1x) var(--g1y), rgba(71, 111, 255, 0.65), transparent 70%),
-    radial-gradient(35% 35% at var(--g2x) var(--g2y), rgba(20, 184, 166, 0.55), transparent 70%),
-    radial-gradient(40% 40% at var(--g3x) var(--g3y), rgba(56, 189, 248, 0.45), transparent 70%),
+  background: radial-gradient(45% 45% at var(--g1x) var(--g1y), rgba(71, 111, 255, 0.85), transparent 70%),
+    radial-gradient(35% 35% at var(--g2x) var(--g2y), rgba(20, 184, 166, 0.75), transparent 70%),
+    radial-gradient(40% 40% at var(--g3x) var(--g3y), rgba(56, 189, 248, 0.65), transparent 70%),
     #020617;
   animation: gradientFlow 36s ease-in-out infinite alternate;
 }
@@ -59,9 +59,9 @@
   content: '';
   position: absolute;
   inset: -20%;
-  background: radial-gradient(800px circle at 20% 20%, rgba(59, 130, 246, 0.35), transparent 70%),
-    radial-gradient(900px circle at 80% 70%, rgba(20, 184, 166, 0.3), transparent 70%),
-    radial-gradient(650px circle at 50% 40%, rgba(14, 165, 233, 0.3), transparent 70%);
+  background: radial-gradient(800px circle at 20% 20%, rgba(59, 130, 246, 0.55), transparent 70%),
+    radial-gradient(900px circle at 80% 70%, rgba(20, 184, 166, 0.5), transparent 70%),
+    radial-gradient(650px circle at 50% 40%, rgba(14, 165, 233, 0.5), transparent 70%);
   filter: blur(60px);
   opacity: 0.9;
   animation: auroraDrift 48s ease-in-out infinite alternate;
