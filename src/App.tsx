@@ -2,11 +2,30 @@ import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 
 const LOADING_DURATION_MS = 180_000;
+const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+
+const toPersianDigits = (value: number) =>
+  value
+    .toString()
+    .split('')
+    .map((char) => (/[0-9]/.test(char) ? PERSIAN_DIGITS[Number(char)] : char))
+    .join('');
+
+const formatDuration = (milliseconds: number) => {
+  const totalSeconds = Math.max(0, Math.round(milliseconds / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const minuteText = minutes > 0 ? `${toPersianDigits(minutes)} دقیقه` : '';
+  const secondText = `${toPersianDigits(seconds)} ثانیه`;
+  return minuteText ? `${minuteText} و ${secondText}` : secondText;
+};
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const progressRef = useRef(0);
+  const isCompleteRef = useRef(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIsLoading(false), LOADING_DURATION_MS);
@@ -29,6 +48,10 @@ function App() {
     };
 
     const updateProgress = () => {
+      if (isCompleteRef.current) {
+        return;
+      }
+
       if (pauseStartRef.current !== null) {
         return;
       }
@@ -58,6 +81,11 @@ function App() {
     };
 
     function scheduleUpdate(delay: number) {
+      if (isCompleteRef.current) {
+        clearExistingTimeout();
+        return;
+      }
+
       clearExistingTimeout();
       timeoutIdRef.current = window.setTimeout(updateProgress, delay);
     }
@@ -104,8 +132,14 @@ function App() {
 
   useEffect(() => {
     if (!isLoading) {
+      isCompleteRef.current = true;
       progressRef.current = 100;
       setProgress(100);
+
+      const now = performance.now();
+      const startTime = startTimeRef.current ?? now - LOADING_DURATION_MS;
+      const totalElapsed = now - startTime - pausedDurationRef.current;
+      setElapsedMs(totalElapsed);
     }
   }, [isLoading]);
 
@@ -133,18 +167,30 @@ function App() {
                 <span className="progress-indicator__suffix">%</span>
               </div>
             </div>
-            <p className="loading-text">در حال بارگذاری...</p>
-            <p className="loading-subtext">لطفاً تا آماده شدن سامانه شکیبا باشید.</p>
+            <p className="loading-text">در حال اتلاف وقت فوق‌حرفه‌ای...</p>
+            <p className="loading-subtext">
+              سامانه دارد برای سه دقیقه آینده داستانی حماسی دربارهٔ بارگذاری شما می‌نویسد.
+            </p>
             <div className="progress-track" aria-hidden="true">
               <div className="progress-bar" style={{ width: `${progress}%` }} />
             </div>
-            <p className="progress-note">در این میان می‌توانید به یک فنجان چای فکر کنید.</p>
+            <p className="progress-note">تا آن موقع به دوچرخه‌ای فکر کنید که سربالایی می‌رود و غر نمی‌زند.</p>
+            <p className="progress-footnote">
+              هر بار که خسته شدید، یک زنگ خیالی بزنید تا بدانیم هنوز اینجایید.
+            </p>
           </div>
         </div>
       ) : (
         <div className="loaded-message">
-          <h1>آماده شد!</h1>
-          <p>این بخش می‌تواند محتوای اصلی سایت را نمایش دهد.</p>
+          <h1>ماموریت اتلاف وقت با موفقیت انجام شد!</h1>
+          <p>
+            شما رسماً <span className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</span>{' '}
+            از عمر عزیزتان را به این صفحه تقدیم کردید.
+          </p>
+          <p>
+            اگر هنوز توان حرکت دارید، دوچرخه خیالی‌تان را بردارید و یک دور افتخار بزنید، یا صفحه را تازه‌سازی
+            کنید تا دوباره به اوج بی‌مصرفی بازگردید.
+          </p>
         </div>
       )}
     </div>
