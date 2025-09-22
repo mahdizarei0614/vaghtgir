@@ -97,10 +97,12 @@
 }
 
 .App {
+  position: relative;
   min-height: 100vh;
   font-family: 'Rubik', 'Vazirmatn', 'IRANSans', 'Tahoma', sans-serif;
   color: #1f2937;
   background-color: #f8fafc;
+  overflow: hidden;
 }
 
 .loading-container {
@@ -149,6 +151,7 @@
   box-shadow: 0 30px 110px rgba(148, 163, 184, 0.35);
   border: 1px solid rgba(226, 232, 240, 0.6);
   direction: rtl;
+  animation: softFade 900ms ease both;
 }
 
 .progress-indicator {
@@ -258,6 +261,7 @@
   text-align: center;
   padding: 2rem;
   gap: 1rem;
+  animation: softFade 900ms ease both;
 }
 
 .loaded-message h1 {
@@ -281,6 +285,52 @@
   background: rgba(255, 105, 180, 0.12);
   color: #be123c;
   font-weight: 600;
+}
+
+.quote-banner {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.75rem, 6vw, 3.5rem);
+  transform: translate(-50%, 28px);
+  padding: 0.75rem 1.8rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #f8fafc;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.28);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms ease, transform 900ms ease;
+  backdrop-filter: blur(14px) saturate(160%);
+}
+
+.quote-banner--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.quote-banner__content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+  direction: rtl;
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.quote-banner__text {
+  font-weight: 500;
+}
+
+.quote-banner__separator {
+  opacity: 0.6;
+}
+
+.quote-banner__author {
+  font-weight: 600;
+  color: #fde68a;
 }
 
 @keyframes gradientFlow {
@@ -349,5 +399,16 @@
   }
   100% {
     transform: translate3d(-4%, 3%, 0) scale(1.08);
+  }
+}
+
+@keyframes softFade {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
