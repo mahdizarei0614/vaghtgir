@@ -13,13 +13,29 @@ function App() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  const startTimeRef = useRef<number | null>(null);
+  const pausedDurationRef = useRef(0);
+  const pauseStartRef = useRef<number | null>(null);
+  const timeoutIdRef = useRef<number | null>(null);
+
   useEffect(() => {
-    const startTime = performance.now();
-    let timeoutId: number;
+    startTimeRef.current = performance.now();
+
+    const clearExistingTimeout = () => {
+      if (timeoutIdRef.current !== null) {
+        window.clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+    };
 
     const updateProgress = () => {
+      if (pauseStartRef.current !== null) {
+        return;
+      }
+
       const now = performance.now();
-      const elapsed = now - startTime;
+      const startTime = startTimeRef.current ?? now;
+      const elapsed = now - startTime - pausedDurationRef.current;
       const normalized = Math.min(elapsed / LOADING_DURATION_MS, 1);
       const eased = 1 - Math.pow(1 - normalized, 3);
       const wave = Math.sin(now / 1800) * 0.08 + Math.sin(now / 3100 + 1.2) * 0.06;
@@ -38,12 +54,52 @@ function App() {
       setProgress(progressRef.current);
 
       const delay = 160 + Math.random() * 520;
-      timeoutId = window.setTimeout(updateProgress, delay);
+      scheduleUpdate(delay);
     };
 
-    timeoutId = window.setTimeout(updateProgress, 280);
+    function scheduleUpdate(delay: number) {
+      clearExistingTimeout();
+      timeoutIdRef.current = window.setTimeout(updateProgress, delay);
+    }
 
-    return () => window.clearTimeout(timeoutId);
+    const pause = () => {
+      if (pauseStartRef.current === null) {
+        pauseStartRef.current = performance.now();
+      }
+      clearExistingTimeout();
+    };
+
+    const resume = () => {
+      if (pauseStartRef.current !== null) {
+        pausedDurationRef.current += performance.now() - pauseStartRef.current;
+        pauseStartRef.current = null;
+      }
+      scheduleUpdate(180);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        pause();
+      } else {
+        resume();
+      }
+    };
+
+    const handleBlur = () => pause();
+    const handleFocus = () => resume();
+
+    scheduleUpdate(280);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearExistingTimeout();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   useEffect(() => {
