@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import confetti from 'canvas-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
 
@@ -6,6 +7,8 @@ const LOADING_DURATION_MS = 180_000;
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 const QUOTE_DISPLAY_DURATION_MS = 10_000;
 const QUOTE_FADE_DURATION_MS = 1_000;
+
+type ConfettiInstance = ReturnType<typeof confetti.create>;
 
 const shuffleArray = <T,>(items: readonly T[]) => {
   const cloned = [...items];
@@ -44,10 +47,32 @@ function App() {
   const quotePointerRef = useRef(0);
   const quoteIntervalRef = useRef<number | null>(null);
   const quoteFadeTimeoutRef = useRef<number | null>(null);
+  const confettiCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const confettiInstanceRef = useRef<ConfettiInstance | null>(null);
+  const confettiIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIsLoading(false), LOADING_DURATION_MS);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!confettiCanvasRef.current) {
+      return;
+    }
+
+    confettiInstanceRef.current = confetti.create(confettiCanvasRef.current, {
+      resize: true,
+      useWorker: true,
+    });
+
+    return () => {
+      if (confettiIntervalRef.current !== null) {
+        window.clearInterval(confettiIntervalRef.current);
+      }
+      confettiInstanceRef.current?.reset();
+      confettiInstanceRef.current = null;
+    };
   }, []);
 
   const startTimeRef = useRef<number | null>(null);
@@ -162,6 +187,46 @@ function App() {
   }, [isLoading]);
 
   useEffect(() => {
+    const instance = confettiInstanceRef.current;
+
+    if (!instance) {
+      return;
+    }
+
+    if (isLoading) {
+      if (confettiIntervalRef.current !== null) {
+        window.clearInterval(confettiIntervalRef.current);
+        confettiIntervalRef.current = null;
+      }
+      instance.reset();
+      return;
+    }
+
+    const launchConfetti = () =>
+      instance({
+        particleCount: 8,
+        spread: 120,
+        startVelocity: 34,
+        gravity: 0.8,
+        decay: 0.9,
+        ticks: 240,
+        scalar: 0.9,
+        origin: { x: Math.random(), y: Math.random() * 0.1 },
+        colors: ['#f472b6', '#fbbf24', '#60a5fa', '#34d399', '#f97316'],
+      });
+
+    launchConfetti();
+    confettiIntervalRef.current = window.setInterval(launchConfetti, 900);
+
+    return () => {
+      if (confettiIntervalRef.current !== null) {
+        window.clearInterval(confettiIntervalRef.current);
+        confettiIntervalRef.current = null;
+      }
+    };
+  }, [isLoading]);
+
+  useEffect(() => {
     if (!TIME_QUOTES.length) {
       return undefined;
     }
@@ -210,8 +275,11 @@ function App() {
   } as React.CSSProperties;
   const activeQuote = TIME_QUOTES[currentQuoteIndex];
 
+  const confettiCanvasClassName = `confetti-canvas${!isLoading ? ' confetti-canvas--active' : ''}`;
+
   return (
     <div className="App">
+      <canvas ref={confettiCanvasRef} className={confettiCanvasClassName} aria-hidden="true" />
       {isLoading ? (
         <div className="loading-container" role="status" aria-live="polite">
           <div className="loading-content">
@@ -248,7 +316,7 @@ function App() {
           <bdi>حالا رفرش کن :)</bdi>
         </div>
       )}
-      {activeQuote ? (
+      {isLoading && activeQuote ? (
         <div
           className={`quote-banner${isQuoteVisible ? ' quote-banner--visible' : ''}`}
           aria-live="polite"

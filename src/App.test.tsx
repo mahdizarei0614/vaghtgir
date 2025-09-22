@@ -4,6 +4,6 @@ import App from './App';
 
 test('نمایش پیام جدی بارگذاری', () => {
   render(<App />);
-  const loadingText = screen.getByText('لطفاً آرام بمانید و چشم از صفحه برندارید.');
+  const loadingText = screen.getByText('نفستو نگه دار؛ رمز به زودی لو می‌ره...');
   expect(loadingText).toBeInTheDocument();
 });
