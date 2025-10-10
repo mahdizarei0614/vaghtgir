@@ -250,10 +250,10 @@ function App() {
 
   return (
     <div className="App">
-      <div className="elapsed-counter" aria-live="polite">
-        <span className="elapsed-counter__label">زمان سپری‌شده</span>
-        <span className="elapsed-counter__value">{formattedElapsed}</span>
-      </div>
+      {/*<div className="elapsed-counter" aria-live="polite">*/}
+      {/*  <span className="elapsed-counter__label">زمان سپری‌شده</span>*/}
+      {/*  <span className="elapsed-counter__value">{formattedElapsed}</span>*/}
+      {/*</div>*/}
       {isLoading ? (
         <div className="loading-container" role="status" aria-live="polite">
           <div className="loading-content">
