@@ -238,15 +238,15 @@ function App() {
     '--progress': Math.min(progress, 100).toFixed(2),
   } as React.CSSProperties;
   const activeQuote = isLoading ? TIME_QUOTES[currentQuoteIndex] : undefined;
-  const elapsedForDisplay = isLoading ? liveElapsedMs : elapsedMs ?? loadingDurationMs;
-  const formattedElapsed = React.useMemo(() => {
-    const totalSeconds = Math.max(0, Math.floor(elapsedForDisplay / 1000));
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    const paddedMinutes = toPersianDigits(minutes).padStart(2, PERSIAN_DIGITS[0]);
-    const paddedSeconds = toPersianDigits(seconds).padStart(2, PERSIAN_DIGITS[0]);
-    return `${paddedMinutes}:${paddedSeconds}`;
-  }, [elapsedForDisplay]);
+  // const elapsedForDisplay = isLoading ? liveElapsedMs : elapsedMs ?? loadingDurationMs;
+  // const formattedElapsed = React.useMemo(() => {
+  //   const totalSeconds = Math.max(0, Math.floor(elapsedForDisplay / 1000));
+  //   const minutes = Math.floor(totalSeconds / 60);
+  //   const seconds = totalSeconds % 60;
+  //   const paddedMinutes = toPersianDigits(minutes).padStart(2, PERSIAN_DIGITS[0]);
+  //   const paddedSeconds = toPersianDigits(seconds).padStart(2, PERSIAN_DIGITS[0]);
+  //   return `${paddedMinutes}:${paddedSeconds}`;
+  // }, [elapsedForDisplay]);
 
   return (
     <div className="App">
