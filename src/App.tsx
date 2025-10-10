@@ -47,6 +47,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
+  const [liveElapsedMs, setLiveElapsedMs] = useState(0);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [isQuoteVisible, setIsQuoteVisible] = useState(false);
   const [windowSize, setWindowSize] = useState(getWindowSize);
@@ -90,6 +91,7 @@ function App() {
       const startTime = startTimeRef.current ?? now;
       const elapsed = now - startTime - pausedDurationRef.current;
       const normalized = Math.min(elapsed / loadingDurationMs, 1);
+      setLiveElapsedMs(elapsed);
       const currentNormalized = progressRef.current / 100;
       const eased = 1 - Math.pow(1 - normalized, 3);
       const progressHeadroom = Math.max(0, 1 - normalized);
@@ -176,6 +178,7 @@ function App() {
       const startTime = startTimeRef.current ?? now - loadingDurationMs;
       const totalElapsed = now - startTime - pausedDurationRef.current;
       setElapsedMs(totalElapsed);
+      setLiveElapsedMs(totalElapsed);
     }
   }, [isLoading, loadingDurationMs]);
 
@@ -235,9 +238,22 @@ function App() {
     '--progress': Math.min(progress, 100).toFixed(2),
   } as React.CSSProperties;
   const activeQuote = isLoading ? TIME_QUOTES[currentQuoteIndex] : undefined;
+  const elapsedForDisplay = isLoading ? liveElapsedMs : elapsedMs ?? loadingDurationMs;
+  const formattedElapsed = React.useMemo(() => {
+    const totalSeconds = Math.max(0, Math.floor(elapsedForDisplay / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const paddedMinutes = toPersianDigits(minutes).padStart(2, PERSIAN_DIGITS[0]);
+    const paddedSeconds = toPersianDigits(seconds).padStart(2, PERSIAN_DIGITS[0]);
+    return `${paddedMinutes}:${paddedSeconds}`;
+  }, [elapsedForDisplay]);
 
   return (
     <div className="App">
+      <div className="elapsed-counter" aria-live="polite">
+        <span className="elapsed-counter__label">زمان سپری‌شده</span>
+        <span className="elapsed-counter__value">{formattedElapsed}</span>
+      </div>
       {isLoading ? (
         <div className="loading-container" role="status" aria-live="polite">
           <div className="loading-content">
