@@ -3,7 +3,8 @@ import Confetti from 'react-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
 
-const LOADING_DURATION_MS = 210_000;
+const MIN_LOADING_DURATION_MS = 180_000;
+const MAX_LOADING_DURATION_MS = 240_000;
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 const QUOTE_DISPLAY_DURATION_MS = 10_000;
 const QUOTE_FADE_DURATION_MS = 1_000;
@@ -39,6 +40,10 @@ const getWindowSize = () => ({
 });
 
 function App() {
+  const loadingDurationMs = React.useMemo(
+    () => Math.round(MIN_LOADING_DURATION_MS + Math.random() * (MAX_LOADING_DURATION_MS - MIN_LOADING_DURATION_MS)),
+    []
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
@@ -53,9 +58,9 @@ function App() {
   const quoteFadeTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setIsLoading(false), LOADING_DURATION_MS);
+    const timer = window.setTimeout(() => setIsLoading(false), loadingDurationMs);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [loadingDurationMs]);
 
   const startTimeRef = useRef<number | null>(null);
   const pausedDurationRef = useRef(0);
@@ -84,7 +89,7 @@ function App() {
       const now = performance.now();
       const startTime = startTimeRef.current ?? now;
       const elapsed = now - startTime - pausedDurationRef.current;
-      const normalized = Math.min(elapsed / LOADING_DURATION_MS, 1);
+      const normalized = Math.min(elapsed / loadingDurationMs, 1);
       const eased = 1 - Math.pow(1 - normalized, 3);
       const wave = Math.sin(now / 1800) * 0.08 + Math.sin(now / 3100 + 1.2) * 0.06;
       const jitter = (Math.random() - 0.5) * 0.06;
@@ -153,7 +158,7 @@ function App() {
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [loadingDurationMs]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -162,11 +167,11 @@ function App() {
       setProgress(100);
 
       const now = performance.now();
-      const startTime = startTimeRef.current ?? now - LOADING_DURATION_MS;
+      const startTime = startTimeRef.current ?? now - loadingDurationMs;
       const totalElapsed = now - startTime - pausedDurationRef.current;
       setElapsedMs(totalElapsed);
     }
-  }, [isLoading]);
+  }, [isLoading, loadingDurationMs]);
 
   useEffect(() => {
     const handleResize = () => setWindowSize(getWindowSize());
@@ -266,7 +271,7 @@ function App() {
           <div className="loaded-message">
             <bdi>
               همین حالا{' '}
-              <bdi className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</bdi>{' '}
+              <bdi className="wasted-duration">{formatDuration(elapsedMs ?? loadingDurationMs)}</bdi>{' '}
               از عمرت دود شد.
             </bdi>
             <bdi>حالا رفرش کن :)</bdi>
