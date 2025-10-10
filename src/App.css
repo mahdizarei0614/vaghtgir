@@ -105,6 +105,37 @@
   overflow: hidden;
 }
 
+.elapsed-counter {
+  position: fixed;
+  top: clamp(1rem, 3vw, 1.75rem);
+  right: clamp(1rem, 3vw, 1.75rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  background: rgba(15, 23, 42, 0.6);
+  color: #f8fafc;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+  backdrop-filter: blur(14px) saturate(160%);
+  direction: rtl;
+  z-index: 4;
+  font-feature-settings: 'tnum' on;
+}
+
+.elapsed-counter__label {
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+
+.elapsed-counter__value {
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
 .loading-container {
   position: relative;
   display: flex;

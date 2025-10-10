@@ -3,7 +3,8 @@ import Confetti from 'react-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
 
-const LOADING_DURATION_MS = 210_000;
+const MIN_LOADING_DURATION_MS = 180_000;
+const MAX_LOADING_DURATION_MS = 240_000;
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 const QUOTE_DISPLAY_DURATION_MS = 10_000;
 const QUOTE_FADE_DURATION_MS = 1_000;
@@ -39,9 +40,14 @@ const getWindowSize = () => ({
 });
 
 function App() {
+  const loadingDurationMs = React.useMemo(
+    () => Math.round(MIN_LOADING_DURATION_MS + Math.random() * (MAX_LOADING_DURATION_MS - MIN_LOADING_DURATION_MS)),
+    []
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
+  const [liveElapsedMs, setLiveElapsedMs] = useState(0);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [isQuoteVisible, setIsQuoteVisible] = useState(false);
   const [windowSize, setWindowSize] = useState(getWindowSize);
@@ -53,9 +59,9 @@ function App() {
   const quoteFadeTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setIsLoading(false), LOADING_DURATION_MS);
+    const timer = window.setTimeout(() => setIsLoading(false), loadingDurationMs);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [loadingDurationMs]);
 
   const startTimeRef = useRef<number | null>(null);
   const pausedDurationRef = useRef(0);
@@ -84,24 +90,31 @@ function App() {
       const now = performance.now();
       const startTime = startTimeRef.current ?? now;
       const elapsed = now - startTime - pausedDurationRef.current;
-      const normalized = Math.min(elapsed / LOADING_DURATION_MS, 1);
+      const normalized = Math.min(elapsed / loadingDurationMs, 1);
+      setLiveElapsedMs(elapsed);
+      const currentNormalized = progressRef.current / 100;
       const eased = 1 - Math.pow(1 - normalized, 3);
-      const wave = Math.sin(now / 1800) * 0.08 + Math.sin(now / 3100 + 1.2) * 0.06;
-      const jitter = (Math.random() - 0.5) * 0.06;
+      const progressHeadroom = Math.max(0, 1 - normalized);
+      const waveAmplitude = progressHeadroom > 0 ? 0.22 * Math.pow(progressHeadroom, 0.6) : 0;
+      const wave = Math.sin(now / 1800) * waveAmplitude + Math.sin(now / 3100 + 1.2) * waveAmplitude * 0.75;
+      const jitter = (Math.random() - 0.5) * waveAmplitude * 0.9;
 
-      const projected = (eased + wave + jitter) * 100;
-      const maxAllowed = normalized * 100 + 12;
-      const minAllowed = normalized * 100 - 14;
+      const decorated = eased + wave + jitter;
+      const guardNormalized = normalized < 1 ? 1 - Math.min(0.02, progressHeadroom * 0.9) : 1;
+      const maxAllowed = Math.min(guardNormalized, normalized + waveAmplitude * 0.8, currentNormalized + 0.07);
+      const minCandidate = Math.max(0, normalized - waveAmplitude, currentNormalized + 0.0025);
+      const minAllowed = Math.min(minCandidate, guardNormalized);
+      const boundedNormalized = Math.min(maxAllowed, Math.max(decorated, minAllowed));
 
-      const nextValue = Math.max(
-        Math.min(projected, maxAllowed, progressRef.current + 5.5, 99.5),
-        Math.max(minAllowed, progressRef.current + 0.25)
-      );
+      const nextValue = Number((boundedNormalized * 100).toFixed(2));
 
-      progressRef.current = Number(nextValue.toFixed(2));
-      setProgress(progressRef.current);
+      progressRef.current = nextValue;
+      setProgress(nextValue);
 
-      const delay = 160 + Math.random() * 520;
+      const remaining = Math.max(0, loadingDurationMs - elapsed);
+      const delayBase = remaining > 4_000 ? 160 : 110;
+      const delayJitter = remaining > 4_000 ? 520 : 260;
+      const delay = delayBase + Math.random() * delayJitter;
       scheduleUpdate(delay);
     };
 
@@ -153,7 +166,7 @@ function App() {
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [loadingDurationMs]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -162,11 +175,12 @@ function App() {
       setProgress(100);
 
       const now = performance.now();
-      const startTime = startTimeRef.current ?? now - LOADING_DURATION_MS;
+      const startTime = startTimeRef.current ?? now - loadingDurationMs;
       const totalElapsed = now - startTime - pausedDurationRef.current;
       setElapsedMs(totalElapsed);
+      setLiveElapsedMs(totalElapsed);
     }
-  }, [isLoading]);
+  }, [isLoading, loadingDurationMs]);
 
   useEffect(() => {
     const handleResize = () => setWindowSize(getWindowSize());
@@ -221,12 +235,25 @@ function App() {
 
   const progressValue = Math.min(100, Math.round(progress));
   const progressIndicatorStyle = {
-    '--progress': progress.toFixed(2),
+    '--progress': Math.min(progress, 100).toFixed(2),
   } as React.CSSProperties;
   const activeQuote = isLoading ? TIME_QUOTES[currentQuoteIndex] : undefined;
+  const elapsedForDisplay = isLoading ? liveElapsedMs : elapsedMs ?? loadingDurationMs;
+  const formattedElapsed = React.useMemo(() => {
+    const totalSeconds = Math.max(0, Math.floor(elapsedForDisplay / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const paddedMinutes = toPersianDigits(minutes).padStart(2, PERSIAN_DIGITS[0]);
+    const paddedSeconds = toPersianDigits(seconds).padStart(2, PERSIAN_DIGITS[0]);
+    return `${paddedMinutes}:${paddedSeconds}`;
+  }, [elapsedForDisplay]);
 
   return (
     <div className="App">
+      {/*<div className="elapsed-counter" aria-live="polite">*/}
+      {/*  <span className="elapsed-counter__label">زمان سپری‌شده</span>*/}
+      {/*  <span className="elapsed-counter__value">{formattedElapsed}</span>*/}
+      {/*</div>*/}
       {isLoading ? (
         <div className="loading-container" role="status" aria-live="polite">
           <div className="loading-content">
@@ -247,7 +274,7 @@ function App() {
             <p className="loading-text">نفستو نگه دار؛ رمز به زودی لو می‌ره...</p>
             <p className="loading-subtext">لطفاً آرام بمانید و چشم از صفحه برندارید.</p>
             <div className="progress-track" aria-hidden="true">
-              <div className="progress-bar" style={{ width: `${progress}%` }} />
+              <div className="progress-bar" style={{ width: `${Math.min(progress, 100)}%` }} />
             </div>
             <p className="progress-note">میتونی تو این مدت به یه دوچرخه یا یه نون سنگک فکر کنی.</p>
             {/*<p className="progress-footnote">نفس را نگه دار؛ رمز به زودی لو می‌رود.</p>*/}
@@ -266,7 +293,7 @@ function App() {
           <div className="loaded-message">
             <bdi>
               همین حالا{' '}
-              <bdi className="wasted-duration">{formatDuration(elapsedMs ?? LOADING_DURATION_MS)}</bdi>{' '}
+              <bdi className="wasted-duration">{formatDuration(elapsedMs ?? loadingDurationMs)}</bdi>{' '}
               از عمرت دود شد.
             </bdi>
             <bdi>حالا رفرش کن :)</bdi>
