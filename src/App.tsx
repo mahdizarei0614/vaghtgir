@@ -47,7 +47,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
-  const [liveElapsedMs, setLiveElapsedMs] = useState(0);
+  // const [liveElapsedMs, setLiveElapsedMs] = useState(0);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [isQuoteVisible, setIsQuoteVisible] = useState(false);
   const [windowSize, setWindowSize] = useState(getWindowSize);
@@ -91,7 +91,7 @@ function App() {
       const startTime = startTimeRef.current ?? now;
       const elapsed = now - startTime - pausedDurationRef.current;
       const normalized = Math.min(elapsed / loadingDurationMs, 1);
-      setLiveElapsedMs(elapsed);
+      // setLiveElapsedMs(elapsed);
       const currentNormalized = progressRef.current / 100;
       const eased = 1 - Math.pow(1 - normalized, 3);
       const progressHeadroom = Math.max(0, 1 - normalized);
@@ -178,7 +178,7 @@ function App() {
       const startTime = startTimeRef.current ?? now - loadingDurationMs;
       const totalElapsed = now - startTime - pausedDurationRef.current;
       setElapsedMs(totalElapsed);
-      setLiveElapsedMs(totalElapsed);
+      // setLiveElapsedMs(totalElapsed);
     }
   }, [isLoading, loadingDurationMs]);
 
