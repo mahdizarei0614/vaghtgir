@@ -90,23 +90,29 @@ function App() {
       const startTime = startTimeRef.current ?? now;
       const elapsed = now - startTime - pausedDurationRef.current;
       const normalized = Math.min(elapsed / loadingDurationMs, 1);
+      const currentNormalized = progressRef.current / 100;
       const eased = 1 - Math.pow(1 - normalized, 3);
-      const wave = Math.sin(now / 1800) * 0.08 + Math.sin(now / 3100 + 1.2) * 0.06;
-      const jitter = (Math.random() - 0.5) * 0.06;
+      const progressHeadroom = Math.max(0, 1 - normalized);
+      const waveAmplitude = progressHeadroom > 0 ? 0.22 * Math.pow(progressHeadroom, 0.6) : 0;
+      const wave = Math.sin(now / 1800) * waveAmplitude + Math.sin(now / 3100 + 1.2) * waveAmplitude * 0.75;
+      const jitter = (Math.random() - 0.5) * waveAmplitude * 0.9;
 
-      const projected = (eased + wave + jitter) * 100;
-      const maxAllowed = normalized * 100 + 12;
-      const minAllowed = normalized * 100 - 14;
+      const decorated = eased + wave + jitter;
+      const guardNormalized = normalized < 1 ? 1 - Math.min(0.02, progressHeadroom * 0.9) : 1;
+      const maxAllowed = Math.min(guardNormalized, normalized + waveAmplitude * 0.8, currentNormalized + 0.07);
+      const minCandidate = Math.max(0, normalized - waveAmplitude, currentNormalized + 0.0025);
+      const minAllowed = Math.min(minCandidate, guardNormalized);
+      const boundedNormalized = Math.min(maxAllowed, Math.max(decorated, minAllowed));
 
-      const nextValue = Math.max(
-        Math.min(projected, maxAllowed, progressRef.current + 5.5, 99.5),
-        Math.max(minAllowed, progressRef.current + 0.25)
-      );
+      const nextValue = Number((boundedNormalized * 100).toFixed(2));
 
-      progressRef.current = Number(nextValue.toFixed(2));
-      setProgress(progressRef.current);
+      progressRef.current = nextValue;
+      setProgress(nextValue);
 
-      const delay = 160 + Math.random() * 520;
+      const remaining = Math.max(0, loadingDurationMs - elapsed);
+      const delayBase = remaining > 4_000 ? 160 : 110;
+      const delayJitter = remaining > 4_000 ? 520 : 260;
+      const delay = delayBase + Math.random() * delayJitter;
       scheduleUpdate(delay);
     };
 
@@ -226,7 +232,7 @@ function App() {
 
   const progressValue = Math.min(100, Math.round(progress));
   const progressIndicatorStyle = {
-    '--progress': progress.toFixed(2),
+    '--progress': Math.min(progress, 100).toFixed(2),
   } as React.CSSProperties;
   const activeQuote = isLoading ? TIME_QUOTES[currentQuoteIndex] : undefined;
 
@@ -252,7 +258,7 @@ function App() {
             <p className="loading-text">نفستو نگه دار؛ رمز به زودی لو می‌ره...</p>
             <p className="loading-subtext">لطفاً آرام بمانید و چشم از صفحه برندارید.</p>
             <div className="progress-track" aria-hidden="true">
-              <div className="progress-bar" style={{ width: `${progress}%` }} />
+              <div className="progress-bar" style={{ width: `${Math.min(progress, 100)}%` }} />
             </div>
             <p className="progress-note">میتونی تو این مدت به یه دوچرخه یا یه نون سنگک فکر کنی.</p>
             {/*<p className="progress-footnote">نفس را نگه دار؛ رمز به زودی لو می‌رود.</p>*/}
