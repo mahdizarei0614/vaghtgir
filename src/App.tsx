@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Confetti from 'react-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
@@ -52,11 +52,51 @@ function App() {
   const [isQuoteVisible, setIsQuoteVisible] = useState(false);
   const [windowSize, setWindowSize] = useState(getWindowSize);
   const progressRef = useRef(0);
+  const progressAnimationFrameRef = useRef<number | null>(null);
+  const pendingProgressRef = useRef<number | null>(null);
   const isCompleteRef = useRef(false);
   const quoteOrderRef = useRef<number[]>([]);
   const quotePointerRef = useRef(0);
   const quoteIntervalRef = useRef<number | null>(null);
   const quoteFadeTimeoutRef = useRef<number | null>(null);
+
+  const flushProgressUpdate = useCallback(() => {
+    if (pendingProgressRef.current === null) {
+      progressAnimationFrameRef.current = null;
+      return;
+    }
+
+    setProgress(pendingProgressRef.current);
+    pendingProgressRef.current = null;
+    progressAnimationFrameRef.current = null;
+  }, []);
+
+  const queueProgressUpdate = useCallback(
+    (value: number) => {
+      if (
+        Math.abs(progressRef.current - value) < 0.001 &&
+        pendingProgressRef.current === null
+      ) {
+        return;
+      }
+
+      progressRef.current = value;
+      pendingProgressRef.current = value;
+
+      if (progressAnimationFrameRef.current === null) {
+        progressAnimationFrameRef.current = window.requestAnimationFrame(flushProgressUpdate);
+      }
+    },
+    [flushProgressUpdate]
+  );
+
+  const cancelQueuedProgressUpdate = useCallback(() => {
+    if (progressAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(progressAnimationFrameRef.current);
+      progressAnimationFrameRef.current = null;
+    }
+    pendingProgressRef.current = null;
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIsLoading(false), loadingDurationMs);
@@ -108,8 +148,7 @@ function App() {
 
       const nextValue = Number((boundedNormalized * 100).toFixed(2));
 
-      progressRef.current = nextValue;
-      setProgress(nextValue);
+      queueProgressUpdate(nextValue);
 
       const remaining = Math.max(0, loadingDurationMs - elapsed);
       const delayBase = remaining > 4_000 ? 160 : 110;
@@ -165,14 +204,14 @@ function App() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
+      cancelQueuedProgressUpdate();
     };
-  }, [loadingDurationMs]);
+  }, [loadingDurationMs, queueProgressUpdate, cancelQueuedProgressUpdate]);
 
   useEffect(() => {
     if (!isLoading) {
       isCompleteRef.current = true;
-      progressRef.current = 100;
-      setProgress(100);
+      queueProgressUpdate(100);
 
       const now = performance.now();
       const startTime = startTimeRef.current ?? now - loadingDurationMs;
@@ -180,7 +219,14 @@ function App() {
       setElapsedMs(totalElapsed);
       // setLiveElapsedMs(totalElapsed);
     }
-  }, [isLoading, loadingDurationMs]);
+  }, [isLoading, loadingDurationMs, queueProgressUpdate]);
+
+  useEffect(
+    () => () => {
+      cancelQueuedProgressUpdate();
+    },
+    [cancelQueuedProgressUpdate]
+  );
 
   useEffect(() => {
     const handleResize = () => setWindowSize(getWindowSize());
@@ -257,6 +303,9 @@ function App() {
       {isLoading ? (
         <div className="loading-container" role="status" aria-live="polite">
           <div className="loading-content">
+            <span id="progress-indicator-label" className="visually-hidden">
+              میزان پیشرفت بارگذاری وقتگیر
+            </span>
             <div
               className="progress-indicator"
               style={progressIndicatorStyle}
@@ -265,6 +314,7 @@ function App() {
               aria-valuemax={100}
               aria-valuenow={progressValue}
               aria-valuetext={`${progressValue} درصد تکمیل`}
+              aria-labelledby="progress-indicator-label"
             >
               <div className="progress-indicator__inner">
                 <span className="progress-indicator__value">{progressValue}</span>
