@@ -1,46 +1,41 @@
-# Getting Started with Create React App
+# معرفی شوخی‌آمیز پروژه واخت‌گیر 😜
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+سلام رفقا! این‌جا همون پروژه‌ایه که وقتی کسی ازم پرسید «چی ساختی؟» بتونم با اعتماد به سقف بگم یه چیز خیلی تاپ زدم، ولی راستش بیشتر شبیه شوخیه تا استارتاپ تک‌شاخ. 😂
 
-## Available Scripts
+## داستان چیه؟
 
-In the project directory, you can run:
+- اسم پروژه: **واخت‌گیر** (خیلی خفن شنیده می‌شه نه؟)
+- کاربرد: دقیقاً هیچ‌چی! فقط یه دکمه و چند تا فایل که وانمود کنه ما خیلی مشغولیم.
+- هدف: سر کار گذاشتن رفقایی که فکر می‌کنن همیشه داریم یه محصول انقلابی لانچ می‌کنیم.
 
-### `npm start`
+## چرا این‌جا وجود داره؟
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- چون همه داشتن پروژه‌های جدی تو گیت‌هاب می‌ذاشتن و ما هم گفتیم بیایم یه چیز فیک بذاریم که بگیم داریم روش کار می‌کنیم.
+- برای اینکه وقتی گیت‌هاب رو باز می‌کنید، حس کنید یه توسعه‌دهنده خفنید ولی در واقع دارید قهوه‌تون رو می‌خورید و توییت می‌کنید.
+- برای اینکه اسکرین‌شات بذاریم و بگیم «بچه‌ها نسخه بتا ریلیز شد، فقط هنوز کاربر نمی‌پذیریم.»
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## چجوری وانمود کنیم کار می‌کنه؟
 
-### `npm test`
+1. `npm install` بزنید که کلی نوشته تو ترمینال بیاد و همه فکر کنن دارید جادو می‌کنید.
+2. `npm start` رو اجرا کنید، یه صفحه سفید میاد که می‌تونید با افتخار بگید «فعلاً روی UI کار می‌کنیم».
+3. اگه یکی پرسید تست‌هات چیه، بگید «CI/CDمون الان رو هواست» و سریع موضوع رو عوض کنید.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## هشدار کاملاً جدی (شوخی نیست 😏)
 
-### `npm run build`
+- این پروژه واقعاً هیچ کاربردی نداره، پس اگه دنبال چیز مفید می‌گردید، همین الان صفحه رو ببندید.
+- هر گونه شباهت به پروژه‌های واقعی صرفاً از تخیلات بیش‌فعال ماست.
+- اگه کسی باور کرد این پروژه دنیارو عوض می‌کنه، لطفاً بهش بگید یه لحظه نفس عمیق بکشه.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## حمایت معنوی
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+اگه خواستید حمایتمون کنید:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- یه استار بزنید که بقیه هم فکر کنن این‌جا خبریه.
+- توی توییتر/اینستا بگید «دیدید فلانی چه پروژه‌ای زده؟» تا موج بسازیم.
+- حتماً بگید «فعلاً پابلیکش نکردن چون خیلی محرمانه‌ست».
 
-### `npm run eject`
+## جمع‌بندی
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+پروژه واخت‌گیر یه یادآوریه که لازم نیست همیشه همه چی جدی باشه. یه کم بخندیم، یه کم هم بگیم داریم محصول می‌سازیم. اگرم کسی پرسید «پس کی لانچ می‌کنید؟» بگید «به‌زودی™».
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+مرسی که تا این‌جا اومدی، حالا برو خودتم یه پروژه فیک بزن که همه رو سر کار بذاری. 😎
