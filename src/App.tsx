@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import Confetti from 'react-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
@@ -8,6 +9,14 @@ const MAX_LOADING_DURATION_MS = 240_000;
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 const QUOTE_DISPLAY_DURATION_MS = 10_000;
 const QUOTE_FADE_DURATION_MS = 1_000;
+
+type ViewTransitionLike = {
+  ready: Promise<void>;
+};
+
+type DocumentWithViewTransition = Document & {
+  startViewTransition?: (callback: () => void) => ViewTransitionLike;
+};
 
 const shuffleArray = <T,>(items: readonly T[]) => {
   const cloned = [...items];
@@ -50,15 +59,24 @@ function App() {
     }
 
     const storedPreference = window.localStorage.getItem('theme');
+    let dark = false;
+
     if (storedPreference === 'dark') {
-      return true;
-    }
-    if (storedPreference === 'light') {
-      return false;
+      dark = true;
+    } else if (storedPreference === 'light') {
+      dark = false;
+    } else {
+      const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)');
+      dark = prefersDark ? prefersDark.matches : false;
     }
 
-    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)');
-    return prefersDark ? prefersDark.matches : false;
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      root.dataset.theme = dark ? 'dark' : 'light';
+      root.style.setProperty('color-scheme', dark ? 'dark' : 'light');
+    }
+
+    return dark;
   });
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -76,6 +94,16 @@ function App() {
   const quoteIntervalRef = useRef<number | null>(null);
   const quoteFadeTimeoutRef = useRef<number | null>(null);
 
+  const setDocumentTheme = useCallback((dark: boolean) => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const root = document.documentElement;
+    root.dataset.theme = dark ? 'dark' : 'light';
+    root.style.setProperty('color-scheme', dark ? 'dark' : 'light');
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -84,9 +112,77 @@ function App() {
     window.localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  const toggleTheme = useCallback(() => {
-    setIsDarkMode((prev) => !prev);
-  }, []);
+  useEffect(() => {
+    setDocumentTheme(isDarkMode);
+  }, [isDarkMode, setDocumentTheme]);
+
+  const toggleTheme = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const nextIsDark = !isDarkMode;
+
+      const applyTheme = () => {
+        setDocumentTheme(nextIsDark);
+        flushSync(() => {
+          setIsDarkMode(nextIsDark);
+        });
+      };
+
+      if (typeof document === 'undefined') {
+        applyTheme();
+        return;
+      }
+
+      const documentWithTransition = document as DocumentWithViewTransition;
+
+      if (typeof documentWithTransition.startViewTransition !== 'function') {
+        applyTheme();
+        return;
+      }
+
+      let transition: ViewTransitionLike | null = null;
+
+      try {
+        transition = documentWithTransition.startViewTransition(() => {
+          applyTheme();
+        });
+      } catch (error) {
+        applyTheme();
+        return;
+      }
+
+      if (!transition) {
+        return;
+      }
+
+      transition.ready
+        .then(() => {
+          const right = window.innerWidth - x;
+          const bottom = window.innerHeight - y;
+          const maxRadius = Math.hypot(Math.max(x, right), Math.max(y, bottom));
+
+          document.documentElement.animate(
+            {
+              clipPath: [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${maxRadius}px at ${x}px ${y}px)`,
+              ],
+            },
+            {
+              duration: 600,
+              easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+              pseudoElement: '::view-transition-new(root)',
+            }
+          );
+        })
+        .catch(() => {
+          // Ignore animation errors and proceed without clipping transition.
+        });
+    },
+    [isDarkMode, setDocumentTheme]
+  );
 
   const flushProgressUpdate = useCallback(() => {
     if (pendingProgressRef.current === null) {
@@ -323,11 +419,12 @@ function App() {
   // }, [elapsedForDisplay]);
 
   return (
-    <div className={`App${isDarkMode ? ' App--dark' : ''}`}>
+    <div className="App">
       <button
         type="button"
         className="theme-toggle"
         onClick={toggleTheme}
+        aria-pressed={isDarkMode}
         aria-label={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
         title={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
       >
