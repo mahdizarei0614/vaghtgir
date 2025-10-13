@@ -1,6 +1,13 @@
 :root {
+  color-scheme: light;
+  --page-background-color: #f8fafc;
+  --page-text-color: #1f2937;
+}
+
+:root[data-theme='dark'] {
   color-scheme: dark;
-  background-color: #020617;
+  --page-background-color: #020617;
+  --page-text-color: #f8fafc;
 }
 
 html,
@@ -14,8 +21,8 @@ body {
   font-family: 'Rubik', 'Vazirmatn', 'IRANSans', 'Tahoma', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #020617;
-  color: #f8fafc;
+  background-color: var(--page-background-color);
+  color: var(--page-text-color);
   overflow: hidden;
 }
 

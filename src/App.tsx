@@ -51,14 +51,21 @@ function App() {
 
     const storedPreference = window.localStorage.getItem('theme');
     if (storedPreference === 'dark') {
+      document.documentElement.dataset.theme = 'dark';
+      document.documentElement.style.colorScheme = 'dark';
       return true;
     }
     if (storedPreference === 'light') {
+      document.documentElement.dataset.theme = 'light';
+      document.documentElement.style.colorScheme = 'light';
       return false;
     }
 
     const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)');
-    return prefersDark ? prefersDark.matches : false;
+    const isDark = prefersDark ? prefersDark.matches : false;
+    document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    return isDark;
   });
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -81,11 +88,53 @@ function App() {
       return;
     }
 
-    window.localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    const nextTheme = isDarkMode ? 'dark' : 'light';
+    window.localStorage.setItem('theme', nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+    document.documentElement.style.colorScheme = nextTheme;
   }, [isDarkMode]);
 
+  const themeToggleRef = useRef<HTMLButtonElement | null>(null);
+
   const toggleTheme = useCallback(() => {
-    setIsDarkMode((prev) => !prev);
+    if (typeof document === 'undefined') {
+      setIsDarkMode((prev) => !prev);
+      return;
+    }
+
+    const button = themeToggleRef.current;
+    const rect = button?.getBoundingClientRect();
+    const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const y = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+
+    const applyTheme = () => {
+      setIsDarkMode((prev) => !prev);
+    };
+
+    if ((document as any).startViewTransition) {
+      const transition = (document as any).startViewTransition(applyTheme);
+      transition?.ready?.then(() => {
+        const maxHorizontal = Math.max(x, window.innerWidth - x);
+        const maxVertical = Math.max(y, window.innerHeight - y);
+        const maxRadius = Math.hypot(maxHorizontal, maxVertical);
+        document.documentElement.animate(
+          {
+            clipPath: [
+              `circle(0px at ${x}px ${y}px)`,
+              `circle(${maxRadius}px at ${x}px ${y}px)`,
+            ],
+          },
+          {
+            duration: 1000,
+            easing: 'ease-in-out',
+            pseudoElement: '::view-transition-new(root)',
+          }
+        );
+      });
+      return;
+    }
+
+    applyTheme();
   }, []);
 
   const flushProgressUpdate = useCallback(() => {
@@ -308,9 +357,13 @@ function App() {
   }, [isLoading]);
 
   const progressValue = Math.min(100, Math.round(progress));
-  const progressIndicatorStyle = {
-    '--progress': Math.min(progress, 100).toFixed(2),
-  } as React.CSSProperties;
+  const progressIndicatorStyle = React.useMemo<React.CSSProperties>(() => {
+    const clampedProgress = Math.max(0, Math.min(progress, 100));
+    const stop = clampedProgress.toFixed(2);
+    return {
+      background: `conic-gradient(var(--progress-indicator-sweep-color) ${stop}%, var(--progress-indicator-base-color) ${stop}%), var(--progress-indicator-surface-gradient)`,
+    };
+  }, [progress]);
   const activeQuote = isLoading ? TIME_QUOTES[currentQuoteIndex] : undefined;
   // const elapsedForDisplay = isLoading ? liveElapsedMs : elapsedMs ?? loadingDurationMs;
   // const formattedElapsed = React.useMemo(() => {
@@ -326,6 +379,7 @@ function App() {
     <div className={`App${isDarkMode ? ' App--dark' : ''}`}>
       <button
         type="button"
+        ref={themeToggleRef}
         className="theme-toggle"
         onClick={toggleTheme}
         aria-label={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
