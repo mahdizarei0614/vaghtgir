@@ -1,7 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import Confetti from 'react-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
+
+declare global {
+  interface ViewTransition {
+    ready: Promise<void>;
+  }
+
+  interface Document {
+    startViewTransition?: (callback: () => void) => ViewTransition;
+  }
+}
 
 const MIN_LOADING_DURATION_MS = 180_000;
 const MAX_LOADING_DURATION_MS = 240_000;
@@ -46,19 +57,29 @@ function App() {
   );
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === 'undefined') {
+      if (typeof document !== 'undefined') {
+        document.documentElement.dataset.theme = 'light';
+      }
       return false;
     }
 
     const storedPreference = window.localStorage.getItem('theme');
+    let initial = false;
+
     if (storedPreference === 'dark') {
-      return true;
-    }
-    if (storedPreference === 'light') {
-      return false;
+      initial = true;
+    } else if (storedPreference === 'light') {
+      initial = false;
+    } else {
+      const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)');
+      initial = prefersDark ? prefersDark.matches : false;
     }
 
-    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)');
-    return prefersDark ? prefersDark.matches : false;
+    if (typeof document !== 'undefined') {
+      document.documentElement.dataset.theme = initial ? 'dark' : 'light';
+    }
+
+    return initial;
   });
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -84,9 +105,71 @@ function App() {
     window.localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  const toggleTheme = useCallback(() => {
-    setIsDarkMode((prev) => !prev);
-  }, []);
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.documentElement.dataset.theme = isDarkMode ? 'dark' : 'light';
+  }, [isDarkMode]);
+
+  const toggleTheme = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (typeof document === 'undefined') {
+        setIsDarkMode((prev) => !prev);
+        return;
+      }
+
+      const target = event.currentTarget;
+      const rect = target.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+
+      const updateTheme = () => {
+        flushSync(() => {
+          setIsDarkMode((prev) => !prev);
+        });
+      };
+
+      if (!document.startViewTransition) {
+        updateTheme();
+        return;
+      }
+
+      try {
+        const transition = document.startViewTransition(updateTheme);
+
+        transition.ready
+          .then(() => {
+            const root = document.documentElement;
+            const maxRadius = Math.hypot(
+              Math.max(x, window.innerWidth - x),
+              Math.max(y, window.innerHeight - y)
+            );
+
+            root.animate(
+              {
+                clipPath: [
+                  `circle(0px at ${x}px ${y}px)`,
+                  `circle(${maxRadius}px at ${x}px ${y}px)`,
+                ],
+              },
+              {
+                duration: 600,
+                easing: 'ease-in-out',
+                pseudoElement: '::view-transition-new(root)',
+              }
+            );
+          })
+          .catch(() => {
+            /* no-op: allow the theme change without the reveal animation */
+          });
+      } catch {
+        updateTheme();
+      }
+    },
+    []
+  );
 
   const flushProgressUpdate = useCallback(() => {
     if (pendingProgressRef.current === null) {
@@ -308,9 +391,24 @@ function App() {
   }, [isLoading]);
 
   const progressValue = Math.min(100, Math.round(progress));
-  const progressIndicatorStyle = {
-    '--progress': Math.min(progress, 100).toFixed(2),
-  } as React.CSSProperties;
+  const progressIndicatorBackground = React.useMemo(() => {
+    const clamped = Math.min(Math.max(progress, 0), 100);
+    const leadingColor = isDarkMode
+      ? 'rgba(56, 189, 248, 0.88)'
+      : 'rgba(255, 140, 105, 0.9)';
+    const trailingColor = isDarkMode
+      ? 'rgba(15, 23, 42, 0.65)'
+      : 'rgba(255, 255, 255, 0.5)';
+
+    return `conic-gradient(${leadingColor} ${clamped}%, ${trailingColor} ${clamped}%), var(--progress-indicator-radial)`;
+  }, [isDarkMode, progress]);
+
+  const progressIndicatorStyle = React.useMemo<React.CSSProperties>(
+    () => ({
+      background: progressIndicatorBackground,
+    }),
+    [progressIndicatorBackground]
+  );
   const activeQuote = isLoading ? TIME_QUOTES[currentQuoteIndex] : undefined;
   // const elapsedForDisplay = isLoading ? liveElapsedMs : elapsedMs ?? loadingDurationMs;
   // const formattedElapsed = React.useMemo(() => {
@@ -323,7 +421,7 @@ function App() {
   // }, [elapsedForDisplay]);
 
   return (
-    <div className={`App${isDarkMode ? ' App--dark' : ''}`}>
+    <div className="App">
       <button
         type="button"
         className="theme-toggle"
