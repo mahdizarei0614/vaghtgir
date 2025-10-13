@@ -76,17 +76,85 @@ function App() {
   const quoteIntervalRef = useRef<number | null>(null);
   const quoteFadeTimeoutRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
+  const applyThemeToDocument = useCallback((dark: boolean) => {
+    if (typeof document === 'undefined') {
       return;
     }
 
-    window.localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
+    const root = document.documentElement;
+    root.classList.remove('theme-light', 'theme-dark');
+    root.classList.add(dark ? 'theme-dark' : 'theme-light');
+    root.dataset.theme = dark ? 'dark' : 'light';
 
-  const toggleTheme = useCallback(() => {
-    setIsDarkMode((prev) => !prev);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('theme', dark ? 'dark' : 'light');
+    }
   }, []);
+
+  useEffect(() => {
+    applyThemeToDocument(isDarkMode);
+  }, [applyThemeToDocument, isDarkMode]);
+
+  const toggleTheme = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      const nextIsDark = !isDarkMode;
+
+      if (typeof document === 'undefined') {
+        setIsDarkMode(nextIsDark);
+        return;
+      }
+
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+
+      const runTransition = () => {
+        applyThemeToDocument(nextIsDark);
+        setIsDarkMode(nextIsDark);
+      };
+
+      const startViewTransition = (document as any).startViewTransition;
+
+      if (typeof startViewTransition === 'function') {
+        try {
+          const transition = startViewTransition.call(document, runTransition);
+
+          transition?.ready
+            .then(() => {
+              const maxRadius = Math.hypot(
+                Math.max(x, window.innerWidth - x),
+                Math.max(y, window.innerHeight - y)
+              );
+
+              document.documentElement.animate(
+                {
+                  clipPath: [
+                    `circle(0px at ${x}px ${y}px)`,
+                    `circle(${maxRadius}px at ${x}px ${y}px)`,
+                  ],
+                },
+                {
+                  duration: 700,
+                  easing: 'ease-out',
+                  pseudoElement: '::view-transition-new(root)',
+                }
+              );
+            })
+            .catch(() => {
+              /* no-op */
+            });
+
+          return;
+        } catch {
+          runTransition();
+          return;
+        }
+      }
+
+      runTransition();
+    },
+    [applyThemeToDocument, isDarkMode]
+  );
 
   const flushProgressUpdate = useCallback(() => {
     if (pendingProgressRef.current === null) {
@@ -323,7 +391,7 @@ function App() {
   // }, [elapsedForDisplay]);
 
   return (
-    <div className={`App${isDarkMode ? ' App--dark' : ''}`}>
+    <div className="App">
       <button
         type="button"
         className="theme-toggle"
