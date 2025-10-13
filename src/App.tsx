@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import Confetti from 'react-confetti';
 import './App.css';
 import { TIME_QUOTES } from './timeQuotes';
@@ -60,6 +61,7 @@ function App() {
     const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)');
     return prefersDark ? prefersDark.matches : false;
   });
+  const themeToggleRef = useRef<HTMLButtonElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
@@ -77,16 +79,72 @@ function App() {
   const quoteFadeTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
       return;
     }
 
-    window.localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    const nextTheme = isDarkMode ? 'dark' : 'light';
+    window.localStorage.setItem('theme', nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
   }, [isDarkMode]);
 
   const toggleTheme = useCallback(() => {
-    setIsDarkMode((prev) => !prev);
-  }, []);
+    if (typeof document === 'undefined') {
+      setIsDarkMode((prev) => !prev);
+      return;
+    }
+
+    const root = document.documentElement;
+    const nextIsDark = !isDarkMode;
+
+    const applyTheme = () => {
+      root.dataset.theme = nextIsDark ? 'dark' : 'light';
+      flushSync(() => {
+        setIsDarkMode(nextIsDark);
+      });
+    };
+
+    const startViewTransition = (document as any).startViewTransition?.bind(document);
+
+    if (startViewTransition) {
+      try {
+        const rect = themeToggleRef.current?.getBoundingClientRect();
+        const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+        const y = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+        const transition = startViewTransition(applyTheme);
+
+        if (transition?.ready) {
+          transition.ready
+            .then(() => {
+              const right = window.innerWidth - x;
+              const bottom = window.innerHeight - y;
+              const maxRadius = Math.hypot(Math.max(x, right), Math.max(y, bottom));
+
+              root.animate(
+                {
+                  clipPath: [
+                    `circle(0px at ${x}px ${y}px)`,
+                    `circle(${maxRadius}px at ${x}px ${y}px)`,
+                  ],
+                },
+                {
+                  duration: 700,
+                  easing: 'ease-in-out',
+                  pseudoElement: '::view-transition-new(root)',
+                }
+              );
+            })
+            .catch(() => {
+              // Swallow errors from cancelled transitions.
+            });
+        }
+      } catch {
+        applyTheme();
+      }
+    } else {
+      applyTheme();
+    }
+  }, [isDarkMode]);
 
   const flushProgressUpdate = useCallback(() => {
     if (pendingProgressRef.current === null) {
@@ -323,10 +381,11 @@ function App() {
   // }, [elapsedForDisplay]);
 
   return (
-    <div className={`App${isDarkMode ? ' App--dark' : ''}`}>
+    <div className="App">
       <button
         type="button"
         className="theme-toggle"
+        ref={themeToggleRef}
         onClick={toggleTheme}
         aria-label={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
         title={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
