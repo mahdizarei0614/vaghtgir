@@ -377,9 +377,12 @@ function App() {
 
   const progressValuePrecise = Math.min(progress, 100);
   const progressValue = Math.min(100, Math.round(progressValuePrecise));
+  const progressRatio = Math.min(1, Math.max(0, progressValuePrecise / 100));
   const progressIndicatorStyle = {
-    '--progress': `${progressValuePrecise.toFixed(2)}%`,
+    '--progress': progressRatio.toFixed(4),
   } as React.CSSProperties;
+  const progressValueText = toPersianDigits(progressValue);
+  const progressValueAnnouncement = `${progressValueText} درصد تکمیل`;
   const activeQuote = isLoading ? TIME_QUOTES[currentQuoteIndex] : undefined;
   // const elapsedForDisplay = isLoading ? liveElapsedMs : elapsedMs ?? loadingDurationMs;
   // const formattedElapsed = React.useMemo(() => {
@@ -412,7 +415,7 @@ function App() {
         <div className="loading-container" role="status" aria-live="polite">
           <div className="loading-content">
             <span id="progress-indicator-label" className="visually-hidden">
-              میزان پیشرفت بارگذاری وقتگیر
+              میزان پیشرفت بارگذاری وقتگیر: {progressValueAnnouncement}
             </span>
             <div
               className="progress-indicator"
@@ -421,11 +424,11 @@ function App() {
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={progressValue}
-              aria-valuetext={`${progressValue} درصد تکمیل`}
+              aria-valuetext={progressValueAnnouncement}
               aria-labelledby="progress-indicator-label"
             >
               <div className="progress-indicator__inner">
-                <span className="progress-indicator__value">{progressValue}</span>
+                <span className="progress-indicator__value">{progressValueText}</span>
                 <span className="progress-indicator__suffix">%</span>
               </div>
             </div>
