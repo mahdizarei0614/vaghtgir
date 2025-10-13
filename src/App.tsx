@@ -375,9 +375,10 @@ function App() {
     };
   }, [isLoading]);
 
-  const progressValue = Math.min(100, Math.round(progress));
+  const progressValuePrecise = Math.min(progress, 100);
+  const progressValue = Math.min(100, Math.round(progressValuePrecise));
   const progressIndicatorStyle = {
-    '--progress': Math.min(progress, 100).toFixed(2),
+    '--progress': `${progressValuePrecise.toFixed(2)}%`,
   } as React.CSSProperties;
   const activeQuote = isLoading ? TIME_QUOTES[currentQuoteIndex] : undefined;
   // const elapsedForDisplay = isLoading ? liveElapsedMs : elapsedMs ?? loadingDurationMs;
