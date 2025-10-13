@@ -44,6 +44,22 @@ function App() {
     () => Math.round(MIN_LOADING_DURATION_MS + Math.random() * (MAX_LOADING_DURATION_MS - MIN_LOADING_DURATION_MS)),
     []
   );
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    const storedPreference = window.localStorage.getItem('theme');
+    if (storedPreference === 'dark') {
+      return true;
+    }
+    if (storedPreference === 'light') {
+      return false;
+    }
+
+    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)');
+    return prefersDark ? prefersDark.matches : false;
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
@@ -59,6 +75,18 @@ function App() {
   const quotePointerRef = useRef(0);
   const quoteIntervalRef = useRef<number | null>(null);
   const quoteFadeTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  const toggleTheme = useCallback(() => {
+    setIsDarkMode((prev) => !prev);
+  }, []);
 
   const flushProgressUpdate = useCallback(() => {
     if (pendingProgressRef.current === null) {
@@ -295,7 +323,18 @@ function App() {
   // }, [elapsedForDisplay]);
 
   return (
-    <div className="App">
+    <div className={`App${isDarkMode ? ' App--dark' : ''}`}>
+      <button
+        type="button"
+        className="theme-toggle"
+        onClick={toggleTheme}
+        aria-label={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
+        title={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
+      >
+        <span aria-hidden="true" className="theme-toggle__icon">
+          {isDarkMode ? '☀️' : '🌙'}
+        </span>
+      </button>
       {/*<div className="elapsed-counter" aria-live="polite">*/}
       {/*  <span className="elapsed-counter__label">زمان سپری‌شده</span>*/}
       {/*  <span className="elapsed-counter__value">{formattedElapsed}</span>*/}

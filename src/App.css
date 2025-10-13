@@ -105,6 +105,57 @@
   overflow: hidden;
 }
 
+.App--dark {
+  color: #e2e8f0;
+  background-color: #020617;
+}
+
+.theme-toggle {
+  position: fixed;
+  top: clamp(1rem, 3vw, 1.75rem);
+  left: clamp(1rem, 3vw, 1.75rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(12px) saturate(150%);
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 180ms ease, box-shadow 220ms ease, background 220ms ease, color 220ms ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 38px rgba(15, 23, 42, 0.28);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.7);
+  outline-offset: 3px;
+}
+
+.theme-toggle__icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.App--dark .theme-toggle {
+  border-color: rgba(148, 163, 184, 0.32);
+  background: rgba(71, 85, 105, 0.45);
+  color: #fcd34d;
+  box-shadow: 0 18px 34px rgba(2, 6, 23, 0.45);
+}
+
+.App--dark .theme-toggle:hover {
+  box-shadow: 0 24px 40px rgba(2, 6, 23, 0.55);
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -168,6 +219,20 @@
   animation: gradientFlow 22s ease-in-out infinite alternate;
 }
 
+.App--dark .loading-container {
+  background:
+    radial-gradient(48% 48% at var(--g1x) var(--g1y), rgba(14, 116, 144, 0.45), transparent 76%),
+    radial-gradient(38% 38% at var(--g2x) var(--g2y), rgba(79, 70, 229, 0.45), transparent 74%),
+    radial-gradient(35% 35% at var(--g3x) var(--g3y), rgba(30, 64, 175, 0.4), transparent 72%),
+    radial-gradient(45% 45% at var(--g4x) var(--g4y), rgba(109, 40, 217, 0.35), transparent 74%),
+    radial-gradient(32% 32% at var(--g5x) var(--g5y), rgba(15, 118, 110, 0.38), transparent 72%),
+    radial-gradient(28% 28% at var(--g6x) var(--g6y), rgba(59, 130, 246, 0.35), transparent 74%),
+    radial-gradient(40% 40% at var(--g7x) var(--g7y), rgba(67, 56, 202, 0.3), transparent 72%),
+    radial-gradient(34% 34% at var(--g8x) var(--g8y), rgba(2, 132, 199, 0.32), transparent 72%),
+    radial-gradient(60% 60% at 50% 50%, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.94));
+  animation: gradientFlow 22s ease-in-out infinite alternate;
+}
+
 .loading-container::before {
   content: '';
   position: absolute;
@@ -183,6 +248,16 @@
   z-index: 0;
 }
 
+.App--dark .loading-container::before {
+  background:
+    radial-gradient(720px circle at 20% 18%, rgba(14, 165, 233, 0.32), transparent 74%),
+    radial-gradient(840px circle at 78% 72%, rgba(147, 51, 234, 0.28), transparent 74%),
+    radial-gradient(680px circle at 52% 40%, rgba(30, 64, 175, 0.28), transparent 74%),
+    radial-gradient(560px circle at 30% 80%, rgba(20, 83, 45, 0.24), transparent 77%);
+  filter: blur(58px);
+  opacity: 0.85;
+}
+
 .loading-content {
   position: relative;
   z-index: 1;
@@ -195,6 +270,12 @@
   border: 1px solid rgba(226, 232, 240, 0.6);
   direction: rtl;
   animation: softFade 900ms ease both;
+}
+
+.App--dark .loading-content {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.86), rgba(30, 41, 59, 0.88));
+  border: 1px solid rgba(51, 65, 85, 0.65);
+  box-shadow: 0 36px 110px rgba(2, 6, 23, 0.6);
 }
 
 .progress-indicator {
@@ -216,6 +297,15 @@
   transition: background 220ms ease-out;
 }
 
+.App--dark .progress-indicator {
+  background: conic-gradient(
+      rgba(56, 189, 248, 0.88) calc(var(--progress) * 1%),
+      rgba(15, 23, 42, 0.65) calc(var(--progress) * 1%)
+    ),
+    radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.82));
+  box-shadow: 0 20px 50px rgba(14, 165, 233, 0.25);
+}
+
 .progress-indicator::after {
   content: '';
   position: absolute;
@@ -223,6 +313,11 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(255, 244, 244, 0.7));
   box-shadow: inset 0 12px 24px rgba(148, 163, 184, 0.15);
+}
+
+.App--dark .progress-indicator::after {
+  background: radial-gradient(circle, rgba(30, 41, 59, 0.92), rgba(2, 6, 23, 0.88));
+  box-shadow: inset 0 10px 22px rgba(8, 47, 73, 0.45);
 }
 
 .progress-indicator__inner {
@@ -234,6 +329,10 @@
   gap: 0.35rem;
   color: #fb7185;
   font-weight: 700;
+}
+
+.App--dark .progress-indicator__inner {
+  color: #facc15;
 }
 
 .progress-indicator__value {
@@ -254,10 +353,18 @@
   color: #334155;
 }
 
+.App--dark .loading-text {
+  color: #e2e8f0;
+}
+
 .loading-subtext {
   font-size: clamp(1.15rem, 2.3vw, 1.6rem);
   margin: 0 0 1.5rem;
   color: rgba(71, 85, 105, 0.85);
+}
+
+.App--dark .loading-subtext {
+  color: rgba(226, 232, 240, 0.75);
 }
 
 .progress-track {
@@ -270,6 +377,11 @@
   overflow: hidden;
 }
 
+.App--dark .progress-track {
+  background: rgba(15, 23, 42, 0.86);
+  box-shadow: inset 0 4px 12px rgba(15, 118, 110, 0.35);
+}
+
 .progress-bar {
   height: 100%;
   border-radius: inherit;
@@ -278,16 +390,29 @@
   transition: width 320ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
+.App--dark .progress-bar {
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.88), rgba(129, 140, 248, 0.9));
+  box-shadow: 0 6px 14px rgba(59, 130, 246, 0.3);
+}
+
 .progress-note {
   margin: 0 0 0.5rem;
   font-size: clamp(0.98rem, 2.1vw, 1.24rem);
   color: rgba(71, 85, 105, 0.75);
 }
 
+.App--dark .progress-note {
+  color: rgba(203, 213, 225, 0.78);
+}
+
 .progress-footnote {
   margin: 0;
   font-size: clamp(0.85rem, 1.8vw, 1.08rem);
   color: rgba(100, 116, 139, 0.7);
+}
+
+.App--dark .progress-footnote {
+  color: rgba(148, 163, 184, 0.78);
 }
 
 .loaded-state {
@@ -302,6 +427,13 @@
     radial-gradient(circle at 20% 20%, rgba(255, 237, 213, 0.65), transparent 72%),
     radial-gradient(circle at 78% 78%, rgba(224, 242, 254, 0.6), transparent 70%),
     #f8fafc;
+}
+
+.App--dark .loaded-state {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(30, 64, 175, 0.32), transparent 72%),
+    radial-gradient(circle at 78% 78%, rgba(45, 212, 191, 0.26), transparent 70%),
+    #020617;
 }
 
 .confetti-layer {
@@ -329,10 +461,20 @@
   animation: softFade 900ms ease both;
 }
 
+.App--dark .loaded-message {
+  background: rgba(15, 23, 42, 0.82);
+  color: #e2e8f0;
+  box-shadow: 0 30px 110px rgba(2, 6, 23, 0.65);
+}
+
 .loaded-message h1 {
   font-size: clamp(2.4rem, 5vw, 3.5rem);
   margin: 0;
   color: #334155;
+}
+
+.App--dark .loaded-message h1 {
+  color: #f8fafc;
 }
 
 .loaded-message bdi {
@@ -340,6 +482,10 @@
   font-size: clamp(1.1rem, 2.2vw, 1.6rem);
   color: rgba(71, 85, 105, 0.78);
   max-width: min(620px, 90vw);
+}
+
+.App--dark .loaded-message bdi {
+  color: rgba(226, 232, 240, 0.78);
 }
 
 .wasted-duration {
@@ -350,6 +496,11 @@
   background: rgba(255, 105, 180, 0.12);
   color: #be123c !important;
   font-weight: 600;
+}
+
+.App--dark .wasted-duration {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8 !important;
 }
 
 .quote-banner {
@@ -366,6 +517,12 @@
   opacity: 0;
   transition: opacity 900ms ease, transform 900ms ease;
   backdrop-filter: blur(14px) saturate(160%);
+}
+
+.App--dark .quote-banner {
+  background: rgba(30, 41, 59, 0.85);
+  color: #e2e8f0;
+  box-shadow: 0 18px 48px rgba(2, 6, 23, 0.5);
 }
 
 .quote-banner--visible {
@@ -396,6 +553,10 @@
 .quote-banner__author {
   font-weight: 600;
   color: #fde68a;
+}
+
+.App--dark .quote-banner__author {
+  color: #38bdf8;
 }
 
 @keyframes gradientFlow {
