@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import Confetti from 'react-confetti';
 import './App.css';
@@ -19,6 +19,37 @@ const MAX_LOADING_DURATION_MS = 240_000;
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 const QUOTE_DISPLAY_DURATION_MS = 10_000;
 const QUOTE_FADE_DURATION_MS = 1_000;
+
+type ThemeTransitionMode = 'fade' | 'slide' | 'zoom' | 'flip';
+
+type ThemeTransitionOption = {
+  id: ThemeTransitionMode;
+  label: string;
+  description: string;
+};
+
+const THEME_TRANSITION_OPTIONS: ThemeTransitionOption[] = [
+  {
+    id: 'fade',
+    label: 'محو تدریجی',
+    description: 'تغییر حالت با محو شدن آرام و بازگشت نرم رنگ‌ها.',
+  },
+  {
+    id: 'slide',
+    label: 'جابجایی لغزنده',
+    description: 'پوسته قبلی آرام آرام خارج و حالت جدید از راست وارد می‌شود.',
+  },
+  {
+    id: 'zoom',
+    label: 'بزرگنمایی نرم',
+    description: 'تم جدید با بزرگنمایی و درخشش لطیف ظاهر می‌شود.',
+  },
+  {
+    id: 'flip',
+    label: 'چرخش محوری',
+    description: 'صفحه حول محور عمودی می‌چرخد و تم جدید نمایان می‌شود.',
+  },
+];
 
 const shuffleArray = <T,>(items: readonly T[]) => {
   const cloned = [...items];
@@ -49,6 +80,112 @@ const getWindowSize = () => ({
   width: typeof window !== 'undefined' ? window.innerWidth : 0,
   height: typeof window !== 'undefined' ? window.innerHeight : 0,
 });
+
+const runThemeTransitionAnimation = (
+  root: HTMLElement,
+  mode: ThemeTransitionMode,
+  supportsViewTransitions: boolean
+) => {
+  const duration = 560;
+  const easing = 'cubic-bezier(0.45, 0.05, 0.25, 1)';
+
+  const animatePair = (
+    newFrames: Keyframe[],
+    oldFrames: Keyframe[],
+    customDuration = duration
+  ) => {
+    if (supportsViewTransitions) {
+      root.animate(oldFrames, {
+        duration: customDuration,
+        easing,
+        pseudoElement: '::view-transition-old(root)',
+      });
+      root.animate(newFrames, {
+        duration: customDuration,
+        easing,
+        pseudoElement: '::view-transition-new(root)',
+      });
+      return;
+    }
+
+    root.animate(newFrames, {
+      duration: customDuration,
+      easing,
+      fill: 'both',
+    });
+  };
+
+  switch (mode) {
+    case 'fade':
+      animatePair(
+        [
+          { opacity: 0.25, filter: 'blur(12px)' },
+          { opacity: 1, filter: 'blur(0px)' },
+        ],
+        [
+          { opacity: 1, filter: 'blur(0px)' },
+          { opacity: 0, filter: 'blur(14px)' },
+        ],
+        420
+      );
+      break;
+    case 'slide':
+      animatePair(
+        [
+          { transform: 'translateX(12%)', opacity: 0.2, filter: 'blur(18px)' },
+          { transform: 'translateX(0)', opacity: 1, filter: 'blur(0px)' },
+        ],
+        [
+          { transform: 'translateX(0)', opacity: 1, filter: 'blur(0px)' },
+          { transform: 'translateX(-12%)', opacity: 0, filter: 'blur(18px)' },
+        ]
+      );
+      break;
+    case 'zoom':
+      animatePair(
+        [
+          { transform: 'scale(0.94)', filter: 'brightness(0.8) saturate(0.75)' },
+          { transform: 'scale(1)', filter: 'brightness(1) saturate(1)' },
+        ],
+        [
+          { transform: 'scale(1)', filter: 'brightness(1) saturate(1)' },
+          { transform: 'scale(1.06)', filter: 'brightness(1.2) saturate(1.15)' },
+        ],
+        520
+      );
+      break;
+    case 'flip':
+    default:
+      animatePair(
+        [
+          {
+            transform: 'rotateY(-78deg) scale(1.08)',
+            filter: 'brightness(0.65) contrast(1.1)',
+            opacity: 0,
+          },
+          {
+            transform: 'rotateY(0deg) scale(1)',
+            filter: 'brightness(1) contrast(1)',
+            opacity: 1,
+          },
+        ],
+        [
+          {
+            transform: 'rotateY(0deg) scale(1)',
+            filter: 'brightness(1) contrast(1)',
+            opacity: 1,
+          },
+          {
+            transform: 'rotateY(82deg) scale(0.94)',
+            filter: 'brightness(1.3) contrast(0.85)',
+            opacity: 0,
+          },
+        ],
+        640
+      );
+      break;
+  }
+};
 
 function App() {
   const loadingDurationMs = React.useMemo(
@@ -82,6 +219,15 @@ function App() {
     return initial;
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [themeTransition, setThemeTransition] = useState<ThemeTransitionMode>(() => {
+    if (typeof window === 'undefined') {
+      return 'fade';
+    }
+    const stored = window.localStorage.getItem('theme-transition') as ThemeTransitionMode | null;
+    return stored && THEME_TRANSITION_OPTIONS.some((option) => option.id === stored)
+      ? stored
+      : 'fade';
+  });
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   // const [liveElapsedMs, setLiveElapsedMs] = useState(0);
@@ -106,6 +252,13 @@ function App() {
   }, [isDarkMode]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.localStorage.setItem('theme-transition', themeTransition);
+  }, [themeTransition]);
+
+  useEffect(() => {
     if (typeof document === 'undefined') {
       return;
     }
@@ -114,16 +267,11 @@ function App() {
   }, [isDarkMode]);
 
   const toggleTheme = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
+    (_event: React.MouseEvent<HTMLButtonElement>) => {
       if (typeof document === 'undefined') {
         setIsDarkMode((prev) => !prev);
         return;
       }
-
-      const target = event.currentTarget;
-      const rect = target.getBoundingClientRect();
-      const x = rect.left + rect.width / 2;
-      const y = rect.top + rect.height / 2;
 
       const updateTheme = () => {
         flushSync(() => {
@@ -131,8 +279,14 @@ function App() {
         });
       };
 
+      const runAnimation = (supportsViewTransitions: boolean) => {
+        const root = document.documentElement;
+        runThemeTransitionAnimation(root, themeTransition, supportsViewTransitions);
+      };
+
       if (!document.startViewTransition) {
         updateTheme();
+        requestAnimationFrame(() => runAnimation(false));
         return;
       }
 
@@ -141,34 +295,16 @@ function App() {
 
         transition.ready
           .then(() => {
-            const root = document.documentElement;
-            const maxRadius = Math.hypot(
-              Math.max(x, window.innerWidth - x),
-              Math.max(y, window.innerHeight - y)
-            );
-
-            root.animate(
-              {
-                clipPath: [
-                  `circle(0px at ${x}px ${y}px)`,
-                  `circle(${maxRadius}px at ${x}px ${y}px)`,
-                ],
-              },
-              {
-                duration: 600,
-                easing: 'ease-in-out',
-                pseudoElement: '::view-transition-new(root)',
-              }
-            );
+            runAnimation(true);
           })
           .catch(() => {
-            /* no-op: allow the theme change without the reveal animation */
+            /* allow the theme change without animation */
           });
       } catch {
         updateTheme();
       }
     },
-    []
+    [themeTransition]
   );
 
   const flushProgressUpdate = useCallback(() => {
@@ -391,7 +527,7 @@ function App() {
   }, [isLoading]);
 
   const progressValue = Math.min(100, Math.round(progress));
-  const progressIndicatorBackground = React.useMemo(() => {
+  const progressIndicatorBackground = useMemo(() => {
     const clamped = Math.min(Math.max(progress, 0), 100);
     const leadingColor = isDarkMode
       ? 'rgba(56, 189, 248, 0.88)'
@@ -403,7 +539,7 @@ function App() {
     return `conic-gradient(${leadingColor} ${clamped}%, ${trailingColor} ${clamped}%), var(--progress-indicator-radial)`;
   }, [isDarkMode, progress]);
 
-  const progressIndicatorStyle = React.useMemo<React.CSSProperties>(
+  const progressIndicatorStyle = useMemo<React.CSSProperties>(
     () => ({
       background: progressIndicatorBackground,
     }),
@@ -420,19 +556,44 @@ function App() {
   //   return `${paddedMinutes}:${paddedSeconds}`;
   // }, [elapsedForDisplay]);
 
+  const activeTransition = useMemo(
+    () => THEME_TRANSITION_OPTIONS.find((option) => option.id === themeTransition),
+    [themeTransition]
+  );
+
   return (
     <div className="App">
-      <button
-        type="button"
-        className="theme-toggle"
-        onClick={toggleTheme}
-        aria-label={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
-        title={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
-      >
-        <span aria-hidden="true" className="theme-toggle__icon">
-          {isDarkMode ? '☀️' : '🌙'}
-        </span>
-      </button>
+      <div className="theme-controls">
+        <button
+          type="button"
+          className="theme-toggle"
+          onClick={toggleTheme}
+          aria-label={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
+          title={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
+        >
+          <span aria-hidden="true" className="theme-toggle__icon">
+            {isDarkMode ? '☀️' : '🌙'}
+          </span>
+        </button>
+        <label className="theme-transition-selector">
+          <span className="theme-transition-selector__label">نوع انیمیشن تم</span>
+          <select
+            className="theme-transition-selector__control"
+            value={themeTransition}
+            onChange={(event) => setThemeTransition(event.target.value as ThemeTransitionMode)}
+            aria-label="انتخاب انیمیشن تغییر تم"
+          >
+            {THEME_TRANSITION_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {activeTransition ? (
+            <span className="theme-transition-selector__hint">{activeTransition.description}</span>
+          ) : null}
+        </label>
+      </div>
       {/*<div className="elapsed-counter" aria-live="polite">*/}
       {/*  <span className="elapsed-counter__label">زمان سپری‌شده</span>*/}
       {/*  <span className="elapsed-counter__value">{formattedElapsed}</span>*/}

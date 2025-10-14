@@ -229,10 +229,20 @@
   overflow: hidden;
 }
 
-.theme-toggle {
+.theme-controls {
   position: fixed;
   top: clamp(1rem, 3vw, 1.75rem);
   left: clamp(1rem, 3vw, 1.75rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: stretch;
+  max-width: min(280px, 70vw);
+  z-index: 6;
+}
+
+.theme-toggle {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -245,7 +255,7 @@
   box-shadow: var(--theme-toggle-shadow);
   backdrop-filter: blur(12px) saturate(150%);
   cursor: pointer;
-  z-index: 5;
+  z-index: 1;
   transition: transform 180ms ease, box-shadow 220ms ease, background 220ms ease, color 220ms ease;
 }
 
@@ -262,6 +272,66 @@
 .theme-toggle__icon {
   font-size: 1.4rem;
   line-height: 1;
+}
+
+.theme-transition-selector {
+  display: flex;
+  flex-direction: column;
+  padding: 0.8rem 0.9rem 0.9rem;
+  border-radius: 18px;
+  border: 1px solid var(--theme-toggle-border);
+  background: rgba(15, 23, 42, 0.18);
+  background: color-mix(in srgb, var(--theme-toggle-background) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--theme-toggle-shadow);
+  color: var(--theme-toggle-color);
+  gap: 0.55rem;
+  direction: rtl;
+}
+
+.theme-transition-selector__label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.theme-transition-selector__control {
+  appearance: none;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0.5rem 0.75rem;
+  background: rgba(15, 23, 42, 0.12);
+  color: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.theme-transition-selector__control:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.7);
+  outline-offset: 2px;
+}
+
+.theme-transition-selector__control:hover {
+  background: rgba(15, 23, 42, 0.2);
+}
+
+.theme-transition-selector__hint {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  opacity: 0.75;
+}
+
+@media (max-width: 640px) {
+  .theme-controls {
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+  }
+
+  .theme-transition-selector {
+    width: min(320px, 86vw);
+  }
 }
 
 .visually-hidden {
