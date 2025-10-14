@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import Confetti from 'react-confetti';
 import './App.css';
@@ -19,6 +19,183 @@ const MAX_LOADING_DURATION_MS = 240_000;
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 const QUOTE_DISPLAY_DURATION_MS = 10_000;
 const QUOTE_FADE_DURATION_MS = 1_000;
+
+type ThemeTransitionId = 'fade' | 'slide' | 'flip' | 'zoom';
+
+type ThemeTransitionContext = {
+  pointer: { x: number; y: number };
+  nextTheme: 'light' | 'dark';
+};
+
+type ThemeTransition = {
+  id: ThemeTransitionId;
+  label: string;
+  description: string;
+  icon: string;
+  apply: (root: Element, context: ThemeTransitionContext) => void;
+};
+
+const THEME_TRANSITIONS: readonly ThemeTransition[] = [
+  {
+    id: 'fade',
+    label: 'محو آرام',
+    description: 'تعویض ملایم با محوشدن نرم',
+    icon: '🌫️',
+    apply: (root) => {
+      const duration = 520;
+      root.animate(
+        [
+          { opacity: 0, filter: 'blur(16px)' },
+          { opacity: 1, filter: 'blur(0px)' },
+        ],
+        {
+          duration,
+          easing: 'cubic-bezier(0.33, 1, 0.68, 1)',
+          pseudoElement: '::view-transition-new(root)',
+        }
+      );
+      root.animate(
+        [
+          { opacity: 1, filter: 'blur(0px)' },
+          { opacity: 0, filter: 'blur(12px)' },
+        ],
+        {
+          duration: duration * 0.85,
+          easing: 'cubic-bezier(0.33, 1, 0.68, 1)',
+          pseudoElement: '::view-transition-old(root)',
+        }
+      );
+    },
+  },
+  {
+    id: 'slide',
+    label: 'سر خوردن',
+    description: 'ورود صحنه از سمتی که کلیک کردی',
+    icon: '🛝',
+    apply: (root, { pointer }) => {
+      const width = typeof window !== 'undefined' ? window.innerWidth : 0;
+      const fromLeft = width ? pointer.x < width / 2 : pointer.x < 0;
+      const entryOffset = fromLeft ? '-12%' : '12%';
+      const exitOffset = fromLeft ? '16%' : '-16%';
+      const duration = 640;
+      const easing = 'cubic-bezier(0.22, 1, 0.36, 1)';
+      root.animate(
+        [
+          { transform: `translateX(${entryOffset})`, opacity: 0.55 },
+          { transform: 'translateX(0%)', opacity: 1 },
+        ],
+        {
+          duration,
+          easing,
+          pseudoElement: '::view-transition-new(root)',
+        }
+      );
+      root.animate(
+        [
+          { transform: 'translateX(0%)', opacity: 1 },
+          { transform: `translateX(${exitOffset})`, opacity: 0.1 },
+        ],
+        {
+          duration,
+          easing,
+          pseudoElement: '::view-transition-old(root)',
+        }
+      );
+    },
+  },
+  {
+    id: 'flip',
+    label: 'چرخش سه‌بعدی',
+    description: 'چرخش کارت‌مانند بین دو تم',
+    icon: '🪞',
+    apply: (root, { nextTheme }) => {
+      const rotateIn = nextTheme === 'dark' ? '-82deg' : '82deg';
+      const rotateOut = nextTheme === 'dark' ? '72deg' : '-72deg';
+      const duration = 700;
+      const easing = 'cubic-bezier(0.4, 0, 0.2, 1)';
+      root.animate(
+        [
+          {
+            transform: `perspective(1400px) rotateY(${rotateIn}) scale(0.96)`,
+            opacity: 0.25,
+          },
+          { transform: 'perspective(1400px) rotateY(0deg) scale(1)', opacity: 1 },
+        ],
+        {
+          duration,
+          easing,
+          pseudoElement: '::view-transition-new(root)',
+        }
+      );
+      root.animate(
+        [
+          { transform: 'perspective(1400px) rotateY(0deg) scale(1)', opacity: 1 },
+          {
+            transform: `perspective(1400px) rotateY(${rotateOut}) scale(0.9)`,
+            opacity: 0,
+          },
+        ],
+        {
+          duration,
+          easing,
+          pseudoElement: '::view-transition-old(root)',
+        }
+      );
+    },
+  },
+  {
+    id: 'zoom',
+    label: 'زوم پویا',
+    description: 'بزرگ‌نمایی نقطه‌ی فوکوس کلیک',
+    icon: '🔍',
+    apply: (root, { pointer, nextTheme }) => {
+      const width = typeof window !== 'undefined' ? window.innerWidth : 1;
+      const height = typeof window !== 'undefined' ? window.innerHeight : 1;
+      const offsetX = (pointer.x / width - 0.5) * 8;
+      const offsetY = (pointer.y / height - 0.5) * 8;
+      const zoomTarget = nextTheme === 'dark' ? 1.08 : 1.12;
+      const duration = 560;
+      const easing = 'cubic-bezier(0.33, 1, 0.68, 1)';
+      root.animate(
+        [
+          {
+            transform: `translate(${offsetX}%, ${offsetY}%) scale(${zoomTarget})`,
+            opacity: 0.35,
+            filter: 'saturate(140%)',
+          },
+          { transform: 'translate(0%, 0%) scale(1)', opacity: 1, filter: 'saturate(100%)' },
+        ],
+        {
+          duration,
+          easing,
+          pseudoElement: '::view-transition-new(root)',
+        }
+      );
+      root.animate(
+        [
+          { transform: 'translate(0%, 0%) scale(1)', opacity: 1 },
+          {
+            transform: `translate(${-offsetX}%, ${-offsetY}%) scale(0.9)`,
+            opacity: 0.1,
+          },
+        ],
+        {
+          duration,
+          easing,
+          pseudoElement: '::view-transition-old(root)',
+        }
+      );
+    },
+  },
+];
+
+const THEME_TRANSITION_LOOKUP: Record<ThemeTransitionId, ThemeTransition> = THEME_TRANSITIONS.reduce(
+  (acc, transition) => {
+    acc[transition.id] = transition;
+    return acc;
+  },
+  {} as Record<ThemeTransitionId, ThemeTransition>
+);
 
 const shuffleArray = <T,>(items: readonly T[]) => {
   const cloned = [...items];
@@ -81,6 +258,16 @@ function App() {
 
     return initial;
   });
+  const [themeTransitionId, setThemeTransitionId] = useState<ThemeTransitionId>(() => {
+    if (typeof window === 'undefined') {
+      return 'fade';
+    }
+
+    const stored = window.localStorage.getItem('theme-transition');
+    return stored && ['fade', 'slide', 'flip', 'zoom'].includes(stored)
+      ? (stored as ThemeTransitionId)
+      : 'fade';
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
@@ -106,6 +293,14 @@ function App() {
   }, [isDarkMode]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem('theme-transition', themeTransitionId);
+  }, [themeTransitionId]);
+
+  useEffect(() => {
     if (typeof document === 'undefined') {
       return;
     }
@@ -113,17 +308,30 @@ function App() {
     document.documentElement.dataset.theme = isDarkMode ? 'dark' : 'light';
   }, [isDarkMode]);
 
+  const selectedTransition = useMemo(
+    () => THEME_TRANSITION_LOOKUP[themeTransitionId] ?? THEME_TRANSITIONS[0],
+    [themeTransitionId]
+  );
+
   const toggleTheme = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
+    (
+      event: React.MouseEvent<HTMLButtonElement>,
+      themeTransition: ThemeTransition,
+      nextTheme: 'light' | 'dark'
+    ) => {
       if (typeof document === 'undefined') {
         setIsDarkMode((prev) => !prev);
         return;
       }
 
-      const target = event.currentTarget;
-      const rect = target.getBoundingClientRect();
-      const x = rect.left + rect.width / 2;
-      const y = rect.top + rect.height / 2;
+      const pointer = {
+        x:
+          event.clientX ||
+          (typeof window !== 'undefined' ? window.innerWidth / 2 : 0),
+        y:
+          event.clientY ||
+          (typeof window !== 'undefined' ? window.innerHeight / 2 : 0),
+      };
 
       const updateTheme = () => {
         flushSync(() => {
@@ -142,24 +350,7 @@ function App() {
         transition.ready
           .then(() => {
             const root = document.documentElement;
-            const maxRadius = Math.hypot(
-              Math.max(x, window.innerWidth - x),
-              Math.max(y, window.innerHeight - y)
-            );
-
-            root.animate(
-              {
-                clipPath: [
-                  `circle(0px at ${x}px ${y}px)`,
-                  `circle(${maxRadius}px at ${x}px ${y}px)`,
-                ],
-              },
-              {
-                duration: 600,
-                easing: 'ease-in-out',
-                pseudoElement: '::view-transition-new(root)',
-              }
-            );
+            themeTransition.apply(root, { pointer, nextTheme });
           })
           .catch(() => {
             /* no-op: allow the theme change without the reveal animation */
@@ -425,7 +616,7 @@ function App() {
       <button
         type="button"
         className="theme-toggle"
-        onClick={toggleTheme}
+        onClick={(event) => toggleTheme(event, selectedTransition, isDarkMode ? 'light' : 'dark')}
         aria-label={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
         title={isDarkMode ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'}
       >
@@ -433,6 +624,32 @@ function App() {
           {isDarkMode ? '☀️' : '🌙'}
         </span>
       </button>
+      <div className="theme-transition-picker" role="group" aria-label="انتخاب نوع انیمیشن تغییر تم">
+        <span className="theme-transition-picker__heading">انیمیشن تغییر تم</span>
+        <div className="theme-transition-picker__options">
+          {THEME_TRANSITIONS.map((transitionOption) => {
+            const isActive = transitionOption.id === themeTransitionId;
+            return (
+              <button
+                key={transitionOption.id}
+                type="button"
+                className={`theme-transition-picker__option${
+                  isActive ? ' theme-transition-picker__option--active' : ''
+                }`}
+                onClick={() => setThemeTransitionId(transitionOption.id)}
+                aria-pressed={isActive}
+                aria-label={transitionOption.description}
+                title={transitionOption.description}
+              >
+                <span aria-hidden="true" className="theme-transition-picker__icon">
+                  {transitionOption.icon}
+                </span>
+                <span className="theme-transition-picker__text">{transitionOption.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
       {/*<div className="elapsed-counter" aria-live="polite">*/}
       {/*  <span className="elapsed-counter__label">زمان سپری‌شده</span>*/}
       {/*  <span className="elapsed-counter__value">{formattedElapsed}</span>*/}
