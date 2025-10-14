@@ -20,6 +20,44 @@ const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '�
 const QUOTE_DISPLAY_DURATION_MS = 10_000;
 const QUOTE_FADE_DURATION_MS = 1_000;
 
+type ThemeTransitionStyle = 'fade' | 'wipe' | 'slide' | 'tilt';
+
+type ThemeTransitionOption = {
+  value: ThemeTransitionStyle;
+  label: string;
+  description: string;
+  icon: string;
+};
+
+const THEME_TRANSITION_STORAGE_KEY = 'theme-transition-style';
+
+const THEME_TRANSITION_OPTIONS: readonly ThemeTransitionOption[] = [
+  {
+    value: 'fade',
+    label: 'محو آرام',
+    description: 'تعویض نرم با محو تدریجی صحنه‌ها',
+    icon: '🌫️',
+  },
+  {
+    value: 'wipe',
+    label: 'پرده‌ای',
+    description: 'پرده‌ای که از نقطهٔ کلیک باز یا بسته می‌شود',
+    icon: '🪟',
+  },
+  {
+    value: 'slide',
+    label: 'سر خوردن',
+    description: 'جا‌به‌جایی عمودی با حس کشویی نرم',
+    icon: '🎞️',
+  },
+  {
+    value: 'tilt',
+    label: 'چرخش سه‌بعدی',
+    description: 'چرخش منشوری برای تعویض سریع تم',
+    icon: '🪩',
+  },
+];
+
 const shuffleArray = <T,>(items: readonly T[]) => {
   const cloned = [...items];
   for (let i = cloned.length - 1; i > 0; i -= 1) {
@@ -97,6 +135,20 @@ function App() {
   const quoteIntervalRef = useRef<number | null>(null);
   const quoteFadeTimeoutRef = useRef<number | null>(null);
 
+  const [transitionStyle, setTransitionStyle] = useState<ThemeTransitionStyle>(() => {
+    if (typeof window === 'undefined') {
+      return 'fade';
+    }
+
+    const stored = window.localStorage.getItem(
+      THEME_TRANSITION_STORAGE_KEY
+    ) as ThemeTransitionStyle | null;
+
+    return stored && THEME_TRANSITION_OPTIONS.some((option) => option.value === stored)
+      ? stored
+      : 'fade';
+  });
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -106,6 +158,14 @@ function App() {
   }, [isDarkMode]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem(THEME_TRANSITION_STORAGE_KEY, transitionStyle);
+  }, [transitionStyle]);
+
+  useEffect(() => {
     if (typeof document === 'undefined') {
       return;
     }
@@ -113,17 +173,30 @@ function App() {
     document.documentElement.dataset.theme = isDarkMode ? 'dark' : 'light';
   }, [isDarkMode]);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.documentElement.dataset.themeTransition = transitionStyle;
+  }, [transitionStyle]);
+
   const toggleTheme = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (typeof document === 'undefined') {
+      if (typeof document === 'undefined' || typeof window === 'undefined') {
         setIsDarkMode((prev) => !prev);
         return;
       }
 
-      const target = event.currentTarget;
-      const rect = target.getBoundingClientRect();
-      const x = rect.left + rect.width / 2;
-      const y = rect.top + rect.height / 2;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const isKeyboardTrigger = event.clientX === 0 && event.clientY === 0;
+      const pointerX = isKeyboardTrigger ? viewportWidth / 2 : event.clientX;
+      const pointerY = isKeyboardTrigger ? viewportHeight / 2 : event.clientY;
+      const relativeX = viewportWidth ? pointerX / viewportWidth : 0.5;
+      const relativeY = viewportHeight ? pointerY / viewportHeight : 0.5;
+      const horizontalBias = relativeX < 0.5 ? 'left' : 'right';
+      const verticalBias = relativeY < 0.5 ? 'top' : 'bottom';
 
       const updateTheme = () => {
         flushSync(() => {
@@ -142,21 +215,124 @@ function App() {
         transition.ready
           .then(() => {
             const root = document.documentElement;
-            const maxRadius = Math.hypot(
-              Math.max(x, window.innerWidth - x),
-              Math.max(y, window.innerHeight - y)
-            );
+            const sharedTiming: KeyframeAnimationOptions = {
+              duration: 620,
+              easing: 'cubic-bezier(0.33, 1, 0.68, 1)',
+              fill: 'both',
+            };
+
+            if (transitionStyle === 'fade') {
+              root.animate(
+                [
+                  { opacity: 1 },
+                  { opacity: 0 },
+                ],
+                {
+                  ...sharedTiming,
+                  pseudoElement: '::view-transition-old(root)',
+                }
+              );
+              root.animate(
+                [
+                  { opacity: 0 },
+                  { opacity: 1 },
+                ],
+                {
+                  ...sharedTiming,
+                  pseudoElement: '::view-transition-new(root)',
+                }
+              );
+              return;
+            }
+
+            if (transitionStyle === 'wipe') {
+              const fromLeft = horizontalBias === 'left';
+              const clipPathClosed = fromLeft
+                ? 'inset(0% 0% 0% 100%)'
+                : 'inset(0% 100% 0% 0%)';
+              const clipPathOpen = 'inset(0% 0% 0% 0%)';
+
+              root.animate(
+                [
+                  { clipPath: clipPathOpen, opacity: 1 },
+                  { clipPath: clipPathClosed, opacity: 0.2 },
+                ],
+                {
+                  ...sharedTiming,
+                  easing: 'cubic-bezier(0.4, 0, 1, 1)',
+                  pseudoElement: '::view-transition-old(root)',
+                }
+              );
+              root.animate(
+                [
+                  { clipPath: clipPathClosed, opacity: 0.15 },
+                  { clipPath: clipPathOpen, opacity: 1 },
+                ],
+                {
+                  ...sharedTiming,
+                  easing: 'cubic-bezier(0, 0, 0.2, 1)',
+                  pseudoElement: '::view-transition-new(root)',
+                }
+              );
+              return;
+            }
+
+            if (transitionStyle === 'slide') {
+              const fromTop = verticalBias === 'top';
+              const translateStart = fromTop ? '-16%' : '16%';
+              const translateOpposite = fromTop ? '16%' : '-16%';
+
+              root.animate(
+                [
+                  { transform: 'translateY(0%)', opacity: 1 },
+                  { transform: `translateY(${translateStart})`, opacity: 0 },
+                ],
+                {
+                  ...sharedTiming,
+                  easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                  pseudoElement: '::view-transition-old(root)',
+                }
+              );
+              root.animate(
+                [
+                  { transform: `translateY(${translateOpposite})`, opacity: 0 },
+                  { transform: 'translateY(0%)', opacity: 1 },
+                ],
+                {
+                  ...sharedTiming,
+                  easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                  pseudoElement: '::view-transition-new(root)',
+                }
+              );
+              return;
+            }
+
+            const rotateDirection = horizontalBias === 'left' ? -1 : 1;
+            const perspective = 'perspective(1200px)';
 
             root.animate(
+              [
+                { transform: `${perspective} rotateY(0deg)`, opacity: 1 },
+                { transform: `${perspective} rotateY(${rotateDirection * 22}deg)`, opacity: 0.6 },
+                { transform: `${perspective} rotateY(${rotateDirection * 90}deg)`, opacity: 0 },
+              ],
               {
-                clipPath: [
-                  `circle(0px at ${x}px ${y}px)`,
-                  `circle(${maxRadius}px at ${x}px ${y}px)`,
-                ],
-              },
+                ...sharedTiming,
+                duration: 680,
+                easing: 'cubic-bezier(0.76, 0, 0.24, 1)',
+                pseudoElement: '::view-transition-old(root)',
+              }
+            );
+            root.animate(
+              [
+                { transform: `${perspective} rotateY(${-rotateDirection * 90}deg)`, opacity: 0 },
+                { transform: `${perspective} rotateY(${-rotateDirection * 22}deg)`, opacity: 0.7 },
+                { transform: `${perspective} rotateY(0deg)`, opacity: 1 },
+              ],
               {
-                duration: 600,
-                easing: 'ease-in-out',
+                ...sharedTiming,
+                duration: 680,
+                easing: 'cubic-bezier(0.17, 0.84, 0.44, 1)',
                 pseudoElement: '::view-transition-new(root)',
               }
             );
@@ -168,7 +344,7 @@ function App() {
         updateTheme();
       }
     },
-    []
+    [transitionStyle]
   );
 
   const flushProgressUpdate = useCallback(() => {
@@ -422,6 +598,37 @@ function App() {
 
   return (
     <div className="App">
+      <div className="transition-panel" role="group" aria-labelledby="transition-panel-label">
+        <span id="transition-panel-label" className="transition-panel__label">
+          سبک تغییر تم
+        </span>
+        <div className="transition-panel__options">
+          {THEME_TRANSITION_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className={`transition-option${
+                transitionStyle === option.value ? ' transition-option--active' : ''
+              }`}
+            >
+              <input
+                type="radio"
+                name="theme-transition"
+                value={option.value}
+                checked={transitionStyle === option.value}
+                onChange={() => setTransitionStyle(option.value)}
+                className="transition-option__input"
+              />
+              <span className="transition-option__icon" aria-hidden="true">
+                {option.icon}
+              </span>
+              <span className="transition-option__text">
+                <span className="transition-option__title">{option.label}</span>
+                <span className="transition-option__description">{option.description}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
       <button
         type="button"
         className="theme-toggle"
