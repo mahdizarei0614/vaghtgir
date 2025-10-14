@@ -20,6 +20,146 @@ const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '�
 const QUOTE_DISPLAY_DURATION_MS = 10_000;
 const QUOTE_FADE_DURATION_MS = 1_000;
 
+type ThemeTransitionContext = {
+  x: number;
+  y: number;
+  viewportWidth: number;
+  viewportHeight: number;
+  currentTheme: 'light' | 'dark';
+  nextTheme: 'light' | 'dark';
+  index: number;
+};
+
+type ThemeTransition = (root: HTMLElement, context: ThemeTransitionContext) => void;
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const softFadeTransition: ThemeTransition = (root) => {
+  root.animate(
+    [
+      { opacity: 0, filter: 'blur(28px) saturate(120%)' },
+      { opacity: 1, filter: 'blur(0px) saturate(100%)' },
+    ],
+    {
+      duration: 460,
+      easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      pseudoElement: '::view-transition-new(root)',
+    }
+  );
+
+  root.animate(
+    [
+      { opacity: 1, filter: 'blur(0px) saturate(100%)' },
+      { opacity: 0, filter: 'blur(20px) saturate(80%)' },
+    ],
+    {
+      duration: 380,
+      easing: 'cubic-bezier(0.64, 0, 0.78, 0)',
+      pseudoElement: '::view-transition-old(root)',
+    }
+  );
+};
+
+const horizonSlideTransition: ThemeTransition = (root, { nextTheme }) => {
+  const direction = nextTheme === 'dark' ? -1 : 1;
+  const offset = 48 * direction;
+
+  root.animate(
+    [
+      { transform: `translateX(${offset}px) scale(0.96)`, opacity: 0 },
+      { transform: 'translateX(0px) scale(1)', opacity: 1 },
+    ],
+    {
+      duration: 520,
+      easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+      pseudoElement: '::view-transition-new(root)',
+    }
+  );
+
+  root.animate(
+    [
+      { transform: 'translateX(0px) scale(1)', opacity: 1 },
+      { transform: `translateX(${-offset * 0.45}px) scale(1.02)`, opacity: 0 },
+    ],
+    {
+      duration: 420,
+      easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
+      pseudoElement: '::view-transition-old(root)',
+    }
+  );
+};
+
+const angledRevealTransition: ThemeTransition = (root, { x, y, viewportWidth, viewportHeight }) => {
+  const horizontalBias = clamp(x / Math.max(viewportWidth, 1), 0, 1);
+  const verticalBias = clamp(y / Math.max(viewportHeight, 1), 0, 1);
+  const startX = Math.round(horizontalBias * 40);
+  const startY = Math.round((1 - verticalBias) * 40);
+
+  root.animate(
+    {
+      clipPath: [
+        `polygon(0% 0%, ${startX}% 0%, 0% ${startY}%, 0% 0%)`,
+        'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+      ],
+    },
+    {
+      duration: 560,
+      easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      pseudoElement: '::view-transition-new(root)',
+    }
+  );
+
+  root.animate(
+    {
+      clipPath: [
+        'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+        `polygon(${100 - startX}% 100%, 100% ${100 - startY}%, 100% 100%, ${100 - startX}% 100%)`,
+      ],
+    },
+    {
+      duration: 480,
+      easing: 'cubic-bezier(0.7, 0, 0.84, 0)',
+      pseudoElement: '::view-transition-old(root)',
+    }
+  );
+};
+
+const verticalCurtainTransition: ThemeTransition = (root, { nextTheme }) => {
+  const fromBottom = nextTheme === 'light';
+  root.animate(
+    {
+      clipPath: fromBottom
+        ? ['inset(100% 0% 0% 0%)', 'inset(0% 0% 0% 0%)']
+        : ['inset(0% 0% 100% 0%)', 'inset(0% 0% 0% 0%)'],
+    },
+    {
+      duration: 620,
+      easing: 'cubic-bezier(0.3, 1, 0.3, 1)',
+      pseudoElement: '::view-transition-new(root)',
+    }
+  );
+
+  root.animate(
+    {
+      clipPath: fromBottom
+        ? ['inset(0% 0% 0% 0%)', 'inset(0% 0% 100% 0%)']
+        : ['inset(0% 0% 0% 0%)', 'inset(100% 0% 0% 0%)'],
+    },
+    {
+      duration: 480,
+      easing: 'cubic-bezier(0.7, 0, 0.84, 0)',
+      pseudoElement: '::view-transition-old(root)',
+    }
+  );
+};
+
+const THEME_TRANSITIONS: readonly ThemeTransition[] = [
+  softFadeTransition,
+  horizonSlideTransition,
+  angledRevealTransition,
+  verticalCurtainTransition,
+];
+
 const shuffleArray = <T,>(items: readonly T[]) => {
   const cloned = [...items];
   for (let i = cloned.length - 1; i > 0; i -= 1) {
@@ -113,63 +253,66 @@ function App() {
     document.documentElement.dataset.theme = isDarkMode ? 'dark' : 'light';
   }, [isDarkMode]);
 
-  const toggleTheme = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (typeof document === 'undefined') {
-        setIsDarkMode((prev) => !prev);
-        return;
-      }
+  const themeAnimationIndexRef = useRef(0);
 
-      const target = event.currentTarget;
-      const rect = target.getBoundingClientRect();
-      const x = rect.left + rect.width / 2;
-      const y = rect.top + rect.height / 2;
+  const toggleTheme = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    if (typeof document === 'undefined') {
+      setIsDarkMode((prev) => !prev);
+      return;
+    }
 
-      const updateTheme = () => {
-        flushSync(() => {
-          setIsDarkMode((prev) => !prev);
-        });
-      };
+    const root = document.documentElement;
+    const currentTheme = root.dataset.theme === 'dark' ? 'dark' : 'light';
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-      if (!document.startViewTransition) {
-        updateTheme();
-        return;
-      }
+    const target = event.currentTarget;
+    const rect = target.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
 
-      try {
-        const transition = document.startViewTransition(updateTheme);
+    const selectTransition = () => {
+      const index = themeAnimationIndexRef.current % THEME_TRANSITIONS.length;
+      themeAnimationIndexRef.current = (themeAnimationIndexRef.current + 1) % THEME_TRANSITIONS.length;
+      return { index, transition: THEME_TRANSITIONS[index] };
+    };
 
-        transition.ready
-          .then(() => {
-            const root = document.documentElement;
-            const maxRadius = Math.hypot(
-              Math.max(x, window.innerWidth - x),
-              Math.max(y, window.innerHeight - y)
-            );
+    const updateTheme = () => {
+      flushSync(() => {
+        setIsDarkMode(nextTheme === 'dark');
+      });
+    };
 
-            root.animate(
-              {
-                clipPath: [
-                  `circle(0px at ${x}px ${y}px)`,
-                  `circle(${maxRadius}px at ${x}px ${y}px)`,
-                ],
-              },
-              {
-                duration: 600,
-                easing: 'ease-in-out',
-                pseudoElement: '::view-transition-new(root)',
-              }
-            );
-          })
-          .catch(() => {
-            /* no-op: allow the theme change without the reveal animation */
+    const { index, transition } = selectTransition();
+
+    if (!document.startViewTransition || !transition) {
+      updateTheme();
+      return;
+    }
+
+    try {
+      const viewTransition = document.startViewTransition(updateTheme);
+
+      viewTransition.ready
+        .then(() => {
+          const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : root.clientWidth;
+          const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : root.clientHeight;
+          transition(root, {
+            x,
+            y,
+            viewportWidth,
+            viewportHeight,
+            currentTheme,
+            nextTheme,
+            index,
           });
-      } catch {
-        updateTheme();
-      }
-    },
-    []
-  );
+        })
+        .catch(() => {
+          /* no-op: allow the theme change without the reveal animation */
+        });
+    } catch {
+      updateTheme();
+    }
+  }, []);
 
   const flushProgressUpdate = useCallback(() => {
     if (pendingProgressRef.current === null) {
