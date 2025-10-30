@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "وقتگیر",
+  "name": "وقتگیر | تجربه‌ی لوکس انتظار",
+  "description": "وقتگیر تجربه‌ای تعاملی برای تبدیل انتظار به فرصتی آرامش‌بخش با انیمیشن‌های نرم و نقل‌قول‌های انگیزشی است.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,8 +19,14 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "lang": "fa-IR",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "display_override": ["standalone", "minimal-ui"],
+  "theme_color": "#f8fafc",
+  "background_color": "#f8fafc",
+  "categories": ["productivity", "lifestyle"],
+  "orientation": "portrait-primary"
 }

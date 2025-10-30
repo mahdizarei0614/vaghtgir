@@ -2,3 +2,6 @@
 User-agent: *
 Allow: /
 
+# Point crawlers to the generated sitemap once deployed
+Sitemap: /sitemap.xml
+

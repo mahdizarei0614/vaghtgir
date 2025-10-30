@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  این فایل به صورت خودکار توسط اسکریپت scripts/generate-sitemap.mjs تولید می‌شود.
+  برای تولید نسخه نهایی، دستور زیر را با متغیر SITE_URL اجرا کنید:
+    SITE_URL="https://your-domain.example" npm run generate:sitemap
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>
