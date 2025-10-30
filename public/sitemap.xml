@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  این فایل به صورت خودکار توسط اسکریپت scripts/generate-sitemap.mjs تولید می‌شود.
+  برای تولید نسخه نهایی، دستور زیر را با متغیر SITE_URL اجرا کنید:
+    SITE_URL="https://your-domain.example" npm run generate:sitemap
+  در غیر این صورت، مقدارهای نمونه زیر فقط به عنوان قالب معتبر XML باقی می‌مانند.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://your-domain.example/</loc>
+    <lastmod>1970-01-01T00:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
